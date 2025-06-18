@@ -15,7 +15,7 @@ app .use(cors());// Use the cors middleware (משתמשים במידלוור ש�
 app.use(bodyParser.json());// Use the body-parser middleware (משתמשים במידלוור של body-parser) (מאפשר לנו לקרוא את גוף הבקשה שנשלחת לשרת שלנו)
 // app.use(bodyParser.urlencoded({ extended: true }));// Use the body-parser middleware for URL-encoded data (משתמשים במידלוור של body-parser לנתונים מקודדים ב-URL) (מאפשר לנו לקרוא את הנתונים שנשלחים בבקשה)
 // Connect to the MongoDB database (מתחברים למסד הנתונים של מונגו די בי)
-mongoose.connect('mongodb+srv://mmoshem1995:3ONqJjN019zAncoe@cluster0.pninpzq.mongodb.net/Android2?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb+srv://mmoshem1995:3ONqJjN019zAncoe@cluster0.pninpzq.mongodb.net/Android2?retryWrites=true&w=majority&appName=Cluster0')// 
   .then(() => console.log('Connected to MongoDB'))// If the connection is successful, log a message to the console (אם החיבור מצליח, נרשום הודעה לקונסול)
   .catch(err => console.error('Error connecting to MongoDB:', err));// If the connection fails, log an error message to the console (אם החיבור נכשל, נרשום הודעת שגיאה לקונסול)
 
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
 })
 
 const User = mongoose.model('User', userSchema,'registerdUsers');// Create a model for the user schema (יוצרים מודל עבור הסכמה של המשתמש וניתן לעשות עליו עכשיו פעולות) (מודל שמייצג את המשתמש במסד הנתונים) under collection name 'users' and if i want to change the name of the collection i can do it like this: const User = mongoose.model('User', userSchema, 'users') and then the collection will be called users
-app.post('/api/users', async (req, res) => {//post request to create a new user (בקשת POST ליצירת משתמש חדש).post is for transferring data to the server ang get is only for getting data from the server
+app.post('/api/users', async (req, res) => {//post request to create a new user (בקשת POST ליצירת משתמש חדש).post is for transferring data to the server ang get is only for getting data from the server the
     const { command, data } = req.body;// Destructure the request body to get the command and data (מפרקים את גוף הבקשה כדי לקבל את הפקודה והנתונים) (גם יודעים מה הוא הcommand וגם יודעים מה הוא הdata)
     try {
         switch (command) {// Check the command and perform the corresponding action (בודקים את הפקודה ומבצעים את הפעולה המתאימה)
