@@ -1,4 +1,4 @@
-// File: routes/authRoutes.js
+
 import express from 'express';
 import { handleUniversalLogin } from '../controllers/authController.js';
 
