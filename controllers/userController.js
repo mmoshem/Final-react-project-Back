@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import UserInfo from "../models/UserInfo.js";
+
 const handleUserCommand = async (req, res) => {
   const { command, data } = req.body;
 
@@ -18,6 +20,16 @@ const handleUserCommand = async (req, res) => {
           password: data.password,
         });
         await newUser.save();
+        await UserInfo.create({
+          userId: newUser._id,
+          birthDate: null,
+          profilePicture: '',
+          followingUsers: [],
+          followingPages: []
+        });
+
+
+
         return res.json({
           message: "User created successfully :)",
           user: newUser,
@@ -42,5 +54,19 @@ const handleUserCommand = async (req, res) => {
   }
 };
 
+const getUserInfo = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userInfo = await UserInfo.findOne({ userId });
+    if (!userInfo) {
+      return res.status(404).json({ message: 'UserInfo not found' });
+    }
+    return res.json(userInfo);
+  } catch (error) {
+    console.error('Error fetching userInfo:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // module.exports = { handleUserCommand };
-export default { handleUserCommand };
+export default { handleUserCommand, getUserInfo };
