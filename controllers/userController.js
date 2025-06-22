@@ -14,14 +14,14 @@ const handleUserCommand = async (req, res) => {
             .json({ message: "User with current email already exists" });
         }
         const newUser = new User({
-          first_name: data.first_name,
-          last_name: data.last_name,
           email: data.email,
           password: data.password,
         });
         await newUser.save();
         await UserInfo.create({
           userId: newUser._id,
+          first_name: data.first_name,
+          last_name: data.last_name,
           birthDate: null,
           profilePicture: '',
           followingUsers: [],

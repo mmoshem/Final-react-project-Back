@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 
 const userInfoSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  first_name: { type: String, required: true },
+  last_name: { type: String, required: true },
   birthDate: { type: Date, default: null },
   profilePicture: { type: String, default: '' },
   followingUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
