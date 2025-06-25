@@ -15,6 +15,8 @@ export const updateUserInfo = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 export const searchUsers = async (req, res) => {
   try {
     const { q } = req.query; // q is the search query
@@ -27,7 +29,6 @@ export const searchUsers = async (req, res) => {
       $or: [
       { first_name: { $regex: '^' + q, $options: 'i' } }, // starts with, case-insensitive
       { last_name: { $regex: '^' + q, $options: 'i' } },
-      { email: { $regex: '^' + q, $options: 'i' } }
       ]
     }).limit(10);
 

@@ -9,6 +9,8 @@ import bodyParser from 'body-parser';
 import companyRoutes from './routes/companyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
+import postRoutes from './routes/postRoutes.js';
+
 const app = express();
 
 // Middlewares
@@ -22,7 +24,8 @@ app.use(userRoutes);
 app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
-// Start server
+app.use(postRoutes);
+
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
