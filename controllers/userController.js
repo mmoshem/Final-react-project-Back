@@ -23,7 +23,7 @@ const handleUserCommand = async (req, res) => {
           first_name: data.first_name,
           last_name: data.last_name,
           birthDate: null,
-          profilePicture: '',
+          profilePicture: 'https://www.w3schools.com/howto/img_avatar.png',
           followingUsers: [],
           followingPages: []
         });

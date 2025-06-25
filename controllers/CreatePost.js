@@ -2,11 +2,17 @@ import Post from "../models/PostModel.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { userId, content } = req.body;
+    const { userId, content, imageUrl } = req.body;
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
-    const newPost = await Post.create({ userId, content });
+    const newPost = await Post.create({
+      userId,
+      content,
+      imageUrl: imageUrl || null,
+      likes: 0,
+      comments: []
+    });
     res.status(201).json(newPost);
   } catch (error) {
     console.error("Error creating post:", error);
@@ -34,6 +40,9 @@ export const getAllPosts = async (req, res) => {
           content: 1,
           createdAt: 1,
           userId: 1,
+          imageUrl: 1,
+          likes: 1,
+          comments: 1,
           profilePicture: '$userInfo.profilePicture',
           first_name: '$userInfo.first_name',
           last_name: '$userInfo.last_name',
