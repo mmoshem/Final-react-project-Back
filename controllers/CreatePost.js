@@ -46,6 +46,7 @@ export const getAllPosts = async (req, res) => {
           profilePicture: '$userInfo.profilePicture',
           first_name: '$userInfo.first_name',
           last_name: '$userInfo.last_name',
+          editedAt: 1, 
         },
       },
     ]);

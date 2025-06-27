@@ -12,6 +12,7 @@ const PostModel = new mongoose.Schema({
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }
   }],
+  editedAt: { type:Date, default:null}, // flag to indicate if the post has been edited
 }, {
   timestamps: true // adds createdAt and updatedAt automatically
 });
