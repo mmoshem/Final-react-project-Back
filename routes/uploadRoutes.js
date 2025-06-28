@@ -7,6 +7,6 @@ router.get('/', (req, res) => {
     res.json({ message: 'Upload route working!' });
 });
 
-router.post('/', uploadController.uploadMiddleware, uploadController.uploadController);
+router.post('/api/upload', uploadController.uploadMiddleware, uploadController.uploadController);
 
 export default router;

@@ -27,7 +27,7 @@ app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
 app.use(postRoutes);
-app.use('/api/upload',uploadRoutes);
+app.use(uploadRoutes);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
