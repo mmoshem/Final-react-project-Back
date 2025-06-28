@@ -1,19 +1,12 @@
 import express from 'express';
-
-console.log('Upload routes file loaded!'); // Add this line
+import uploadController from '../controllers/uploadController.js';
 
 const router = express.Router();
 
-// GET route for browser testing
 router.get('/', (req, res) => {
-    console.log('GET /api/upload called'); // Add this line
-    res.json({ message: 'Upload route working with GET!' });
+    res.json({ message: 'Upload route working!' });
 });
 
-// POST route for actual uploads
-router.post('/', (req, res) => {
-    console.log('POST /api/upload called'); // Add this line
-    res.json({ message: 'Upload route working with POST!' });
-});
+router.post('/', uploadController.uploadMiddleware, uploadController.uploadController);
 
 export default router;
