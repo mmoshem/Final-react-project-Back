@@ -21,21 +21,32 @@ const uploadController = async (req, res) => {
             const uploadStream =  cloudinary.uploader.upload_stream(
                 {resource_type: 'image', folder: 'social_posts'}, // Specify folder in Cloudinary
                 (error,result ) => {
-                    if (error) reject(error);
-                    resolve(result);
+                    if (error){
+                         console.error('Cloudinary error:', error);
+                        reject(error);
+                    }
+                    else{
+                        console.log('Cloudinary success:', result.secure_url);
+                        resolve(result);
+                    }
                 }
             );
             uploadStream.end(req.file.buffer); 
         });
+
         console.log('About to send response with URL:', result.secure_url);
+
         return res.status(200).json({
             success: true,
             url: result.secure_url
         });
        
     }catch (error) {
-        console.error('Error receiving image :', error);
-        res.status(500).json({ message: 'uploading faild' });
+       console.error('Error in uploadController:', error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Upload failed' 
+        });
     }
 }
 
