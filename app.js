@@ -10,6 +10,7 @@ import companyRoutes from './routes/companyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
 app.use(postRoutes);
+app.use('/api/upload',uploadRoutes);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
