@@ -15,12 +15,26 @@ const uploadController = async (req, res) => {
             return res.status(400).json({ message: 'No image provided' });
         } 
         console.log('File received:', req.file.originalname);
+
+        // Upload the image to Cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream =  cloudinary.uploader.upload_stream(
+                {resource_type: 'image', folder: 'social_posts'}, // Specify folder in Cloudinary
+                (error,result ) => {
+                    if (error) reject(error);
+                    resolve(result);
+                }
+            );
+            uploadStream.end(req.file.buffer); 
+        });
+        console.log('Image uploaded to Cloudinary');
         res.json({
-            message: 'Image resived successfully'
+            success: true,
+            url: result.secure_url
          });
     }catch (error) {
         console.error('Error receiving image :', error);
-        res.status(500).json({ message: 'Receiving image faild' });
+        res.status(500).json({ message: 'uploading faild' });
     }
 }
 
