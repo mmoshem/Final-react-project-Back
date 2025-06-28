@@ -27,11 +27,12 @@ const uploadController = async (req, res) => {
             );
             uploadStream.end(req.file.buffer); 
         });
-        console.log('Image uploaded to Cloudinary');
-        res.json({
+        console.log('About to send response with URL:', result.secure_url);
+        return res.status(200).json({
             success: true,
             url: result.secure_url
-         });
+        });
+       
     }catch (error) {
         console.error('Error receiving image :', error);
         res.status(500).json({ message: 'uploading faild' });
