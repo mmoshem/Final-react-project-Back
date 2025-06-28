@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
 const upload = multer({
   storage: multer.memoryStorage(), // Store files in memory for Cloudinary upload
