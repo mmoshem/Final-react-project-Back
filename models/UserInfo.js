@@ -7,6 +7,17 @@ const userInfoSchema = new mongoose.Schema({
   first_name: { type: String, required: true },
   last_name: { type: String, required: true },
   birthDate: { type: Date, default: null },
+  gender: { type: String, default: '' },
+  position: { type: String, default: '' },
+  headline: { type: String, default: '' },
+  location: {
+    city: { type: String, default: '' },
+    country: { type: String, default: '' },
+  },
+  about: { type: String, default: '' },
+  isPrivate: { type: Boolean, default: false },
+
+  
   profilePicture: { type: String, default: '' },
   followingUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   followingPages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Page' }]

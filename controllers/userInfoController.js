@@ -1,7 +1,9 @@
 import UserInfo from "../models/UserInfo.js";
 
 export const updateUserInfo = async (req, res) => {
-  const { userId, updates } = req.body;
+  //const { userId, updates } = req.body;
+  const userId = req.params.userId || req.body.userId;
+  const updates = req.body.updates || req.body; // תמיכה בשני פורמטים
 
   try {
     const updatedInfo = await UserInfo.findOneAndUpdate(
