@@ -12,6 +12,9 @@ import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
+
+
 
 const app = express();
 
@@ -22,6 +25,7 @@ app.use(bodyParser.json());
 connectDB();
 
 // Routes
+app.use(groupRoutes);
 app.use(userRoutes);
 app.use(companyRoutes);
 app.use(authRoutes);
