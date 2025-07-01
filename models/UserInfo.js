@@ -16,8 +16,20 @@ const userInfoSchema = new mongoose.Schema({
   },
   about: { type: String, default: '' },
   isPrivate: { type: Boolean, default: false },
-
-  
+  education: [
+    {
+      university: { type: String, default: '' },
+      startYear: { type: Number },
+      endYear: { type: Number }
+    }
+  ],
+  experience: [
+  {
+    company: { type: String, default: '' },
+    startYear: { type: Number },
+    endYear: { type: Number }
+  }
+  ],
   profilePicture: { type: String, default: '' },
   followingUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   followingPages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Page' }]
