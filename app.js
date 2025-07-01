@@ -11,7 +11,11 @@ import companyRoutes from './routes/companyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
+<<<<<<< HEAD
 import uploadRoutes from './routes/uploadRoutes.js';
+=======
+import profileUploadRoutes from './routes/profileUploadRoute.js';
+>>>>>>> settings
 
 const app = express();
 
@@ -27,7 +31,11 @@ app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
 app.use(postRoutes);
+//
 app.use(uploadRoutes);
+
+app.use('/api', profileUploadRoutes);
+//
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
