@@ -3,7 +3,7 @@ import cloudinary from '../config/cloudinary.js';
 
 const upload = multer({
   storage: multer.memoryStorage(), // Store files in memory for Cloudinary upload
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 
@@ -19,7 +19,7 @@ const uploadController = async (req, res) => {
         // Upload the image to Cloudinary
         const result = await new Promise((resolve, reject) => {
             const uploadStream =  cloudinary.uploader.upload_stream(
-                {resource_type: 'image', folder: 'social_posts'}, // Specify folder in Cloudinary
+                {resource_type: 'auto', folder: 'social_posts'}, 
                 (error,result ) => {
                     if (error){
                          console.error('Cloudinary error:', error);
@@ -50,5 +50,5 @@ const uploadController = async (req, res) => {
     }
 }
 
-const uploadMiddleware = upload.single('image'); 
+const uploadMiddleware = upload.single('file'); 
 export default{ uploadController, uploadMiddleware };
