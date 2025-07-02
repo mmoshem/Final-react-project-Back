@@ -27,7 +27,7 @@ export const getAllPosts = async (req, res) => {
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
-          from: 'userinfos', // collection name in MongoDB (lowercase, plural)
+          from: 'userinfos',
           localField: 'userId',
           foreignField: 'userId',
           as: 'userInfo',
