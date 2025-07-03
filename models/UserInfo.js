@@ -36,6 +36,6 @@ const userInfoSchema = new mongoose.Schema({
 }, {
   timestamps: true // adds createdAt and updatedAt automatically
 });
-
+userInfoSchema.index({ userId: 1 });
 const UserInfo = mongoose.model('UserInfo', userInfoSchema);
 export default UserInfo;

@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 
 
@@ -16,6 +15,10 @@ const PostModel = new mongoose.Schema({
 }, {
   timestamps: true // adds createdAt and updatedAt automatically
 });
+
+PostModel.index({ userId: 1, createdAt: -1 });
+PostModel.index({ content: 'text' });
+PostModel.index({ createdAt: -1 });
 
 const Post = mongoose.model('post', PostModel );
 export default Post;
