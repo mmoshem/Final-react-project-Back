@@ -20,6 +20,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
+
 // DB connection
 connectDB();
 
@@ -29,11 +30,12 @@ app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
 app.use(postRoutes);
-//
+
 app.use(uploadRoutes);
 
 app.use('/api', profileUploadRoutes);
-//
+
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {

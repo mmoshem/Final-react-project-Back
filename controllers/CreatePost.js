@@ -1,5 +1,6 @@
 import Post from "../models/PostModel.js";
 import cloudinary from '../config/cloudinary.js';
+import mongoose, { Types } from 'mongoose';
 
 export const createPost = async (req, res) => {
   try {
@@ -123,5 +124,34 @@ function getResourceType(url) {
   } catch (error) {
     console.error('Error deleting post:', error);
     res.status(500).json({ message: 'Failed to delete post' });
+  }
+};
+
+export const likeDislike = async (req, res) => {
+  
+  const { userId, postID } = req.body;
+  const UserWhoLikes = userId;
+  try {
+    const thePost = await Post.findOne({ _id: postID });
+    if (!thePost) {
+      return res.status(404).json("post not found");
+    }
+
+    if (!Types.ObjectId.isValid(UserWhoLikes)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    const userObjectId = new Types.ObjectId(UserWhoLikes);
+    const userIndex = thePost.likes.users.findIndex(id => id.equals(userObjectId));
+    if (userIndex === -1) {
+      thePost.likes.users.push(userObjectId);
+    } else {
+      thePost.likes.users.splice(userIndex, 1);
+    }
+    thePost.likes.numberOfLikes = thePost.likes.users.length;
+    await thePost.save();
+    res.status(200).json(thePost.likes);
+  } catch (error) {
+    console.error("Error in likeDislike:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
