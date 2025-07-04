@@ -11,7 +11,10 @@ export const createPost = async (req, res) => {
       userId,
       content,
       mediaUrls: mediaUrls || null,
-      likes: 0,
+      likes: {
+        numberOfLikes:0,
+        users:[]
+      },
       comments: []
     });
     res.status(201).json(newPost);
@@ -59,6 +62,9 @@ export const getAllPosts = async (req, res) => {
 };
 
 export const deletePost = async (req, res) => {
+  console.log('DELETE /api/posts/:id called');
+  console.log('req.params:', req.params);
+  console.log('req.body:', req.body);
   function extractPublicId(url) {
     if (!url) {
         console.warn('extractPublicId: URL is null or empty.');
@@ -81,6 +87,13 @@ export const deletePost = async (req, res) => {
     const publicId = publicIdWithExtension.split('.')[0]; 
     return publicId;
 }
+
+function getResourceType(url) {
+  if (!url) return 'image'; // default fallback
+  const videoExtensions = ['.mp4', '.webm', '.ogg'];
+  return videoExtensions.some(ext => url.toLowerCase().endsWith(ext)) ? 'video' : 'image';
+}
+
   try {
     const { id } = req.params;
     const { userId, mediaUrls } = req.body;
@@ -90,10 +103,13 @@ export const deletePost = async (req, res) => {
     // Delete media from Cloudinary if mediaUrls are provided
     if (Array.isArray(mediaUrls)) {
       for (const url of mediaUrls) {
-        console.log("url:", url);
+        console.log("Attempting to delete media URL:", url);
         const publicId = extractPublicId(url);
+        const resourceType = getResourceType(url);
+        console.log("Extracted publicId:", publicId, "Resource type:", resourceType);
         try {
-          await cloudinary.uploader.destroy(publicId);
+          const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+          console.log("Cloudinary destroy result:", result);
         } catch (err) {
           console.error('Failed to delete media from Cloudinary:', err);
         }
