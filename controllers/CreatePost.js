@@ -132,28 +132,30 @@ function getResourceType(url) {
 };
 
 export const likeDislike = async (req, res) => {
-  
   const { userId, postID } = req.body;
-  const UserWhoLikes = userId;
   try {
-    const thePost = await Post.findOne({ _id: postID });
-    if (!thePost) {
+    const post = await Post.findById(postID);
+    if (!post) {
       return res.status(404).json("post not found");
     }
 
-    if (!Types.ObjectId.isValid(UserWhoLikes)) {
-      return res.status(400).json({ message: "Invalid user ID" });
-    }
-    const userObjectId = new Types.ObjectId(UserWhoLikes);
-    const userIndex = thePost.likes.users.findIndex(id => id.equals(userObjectId));
-    if (userIndex === -1) {
-      thePost.likes.users.push(userObjectId);
+    const alreadyLiked = post.likedBy.some(id => id.toString() === userId);
+
+    if (alreadyLiked) {
+      await Post.updateOne(
+        { _id: postID },
+        { $pull: { likedBy: userId } }
+      );
+      const updated = await Post.findById(postID);
+      res.status(200).json({ liked: false, likeCount: updated.likedBy.length });
     } else {
-      thePost.likes.users.splice(userIndex, 1);
+      await Post.updateOne(
+        { _id: postID },
+        { $addToSet: { likedBy: userId } }
+      );
+      const updated = await Post.findById(postID);
+      res.status(200).json({ liked: true, likeCount: updated.likedBy.length });
     }
-    thePost.likes.numberOfLikes = thePost.likes.users.length;
-    await thePost.save();
-    res.status(200).json(thePost.likes);
   } catch (error) {
     console.error("Error in likeDislike:", error);
     res.status(500).json({ message: "Internal server error" });
