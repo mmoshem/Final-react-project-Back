@@ -36,7 +36,11 @@ memberCount: {
 createdAt: {
     type: Date,
     default: Date.now
-}
+},
+pendingRequests: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    requestedAt: { type: Date, default: Date.now }
+}],
 });
 
 

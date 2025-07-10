@@ -12,8 +12,10 @@ import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-import groupRoutes from './routes/groupRoutes.js';
-
+import groupRoutes from './routes/Groups/groupRoutes.js';
+import groupPostRoutes from './routes/Groups/groupPostRoutes.js';
+import groupMemberRoutes from './routes/Groups/groupMemberRoutes.js';
+import groupSearchRoutes from './routes/Groups/groupSearchRoutes.js';
 
 
 const app = express();
@@ -26,7 +28,9 @@ connectDB();
 
 // Routes
 app.use(groupRoutes);
-app.use(userRoutes);
+app.use(groupPostRoutes);
+app.use(groupMemberRoutes);
+app.use(groupSearchRoutes);app.use(userRoutes);
 app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);
