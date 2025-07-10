@@ -147,7 +147,7 @@ export const likeDislike = async (req, res) => {
         { $pull: { likedBy: userId } }
       );
       const updated = await Post.findById(postID);
-      res.status(200).json({ liked: false, likeCount: updated.likedBy.length });
+      res.status(200).json({ liked: false, likeCount: updated.likedBy.length });//
     } else {
       await Post.updateOne(
         { _id: postID },
