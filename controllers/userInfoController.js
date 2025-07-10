@@ -18,6 +18,79 @@ export const updateUserInfo = async (req, res) => {
   }
 };
 
+export const followUser = async (req, res) => {
+  console.log('📩 Inside followUser controller');
+  console.log('📦 Follower ID:', req.body.followerId);
+  console.log('📦 Followed ID:', req.body.followedId);
+  try {
+    const { followerId, followedId } = req.body;
+
+    // ודא ששני המשתמשים קיימים
+    const currentUser = await UserInfo.findOne({ userId: followerId  });
+    const viewedUser = await UserInfo.findOne({ userId: followedId  });
+
+    if (!currentUser || !viewedUser) {
+      return res.status(404).json({ error: "One of the users not found" });
+    }
+
+    // אם כבר עוקב – אל תוסיף שוב
+    if (!viewedUser.followers.includes(followerId)) {
+      viewedUser.followers.push(followerId);
+    }
+
+    if (!currentUser.followingUsers.includes(followedId)) {
+      currentUser.followingUsers.push(followedId);
+    }
+
+    await viewedUser.save();
+    await currentUser.save();
+
+    res.status(200).json({ message: "Followed successfully" });
+  } catch (err) {
+    console.error("Follow error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const unfollowUser = async (req, res) => {
+  console.log('📤 Inside unfollowUser controller');
+  console.log('📦 Follower ID:', req.body.followerId);
+  console.log('📦 Followed ID:', req.body.followedId);
+
+  try {
+    const { followerId, followedId } = req.body;
+
+    const currentUser = await UserInfo.findOne({ userId: followerId });
+    const viewedUser = await UserInfo.findOne({ userId: followedId });
+
+    if (!currentUser || !viewedUser) {
+      return res.status(404).json({ error: "One of the users not found" });
+    }
+
+    console.log("🔍 Before unfollow:");
+    console.log("→ viewedUser.followers:", viewedUser.followers);
+    console.log("→ currentUser.followingUsers:", currentUser.followingUsers);
+
+    // הסרה של followerId ממערך העוקבים של המשתמש הנצפה
+    viewedUser.followers = viewedUser.followers.filter(id => id.toString() !== followerId);
+
+    // הסרה של followedId ממערך הנעקבים של המשתמש העוקב
+    currentUser.followingUsers = currentUser.followingUsers.filter(id => id.toString() !== followedId);
+
+    console.log("🧹 After unfollow:");
+    console.log("→ viewedUser.followers:", viewedUser.followers);
+    console.log("→ currentUser.followingUsers:", currentUser.followingUsers);
+
+    await viewedUser.save();
+    await currentUser.save();
+
+    res.status(200).json({ message: "Unfollowed successfully" });
+  } catch (err) {
+    console.error("Unfollow error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 
 export const searchUsers = async (req, res) => {
   try {

@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import UserInfo from "../models/UserInfo.js";
+import mongoose from "mongoose";
 
 const handleUserCommand = async (req, res) => {
   const { command, data } = req.body;
@@ -54,6 +55,7 @@ const handleUserCommand = async (req, res) => {
   }
 };
 
+
 const getUserInfo = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -67,6 +69,7 @@ const getUserInfo = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 // module.exports = { handleUserCommand };
 export default { handleUserCommand, getUserInfo };
