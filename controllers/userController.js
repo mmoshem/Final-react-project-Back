@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import UserInfo from "../models/UserInfo.js";
-
+import bcrypt from 'bcryptjs'
 const handleUserCommand = async (req, res) => {
   const { command, data } = req.body;
 
@@ -13,9 +13,11 @@ const handleUserCommand = async (req, res) => {
             .status(400)
             .json({ message: "User with current email already exists" });
         }
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(data.password, saltRounds);
         const newUser = new User({
           email: data.email,
-          password: data.password,
+          password: hashedPassword
         });
         await newUser.save();
         await UserInfo.create({
