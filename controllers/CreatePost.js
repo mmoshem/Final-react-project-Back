@@ -14,10 +14,7 @@ export const createPost = async (req, res) => {
       userId,
       content,
       mediaUrls: mediaUrls || null,
-      likes: {
-        numberOfLikes:0,
-        users:[]
-      },
+      likedBy: [],
       comments: []
     });
 
@@ -49,7 +46,7 @@ export const getAllPosts = async (req, res) => {
           createdAt: 1,
           userId: 1,
           mediaUrls: 1,
-          likes: 1,
+          likedBy: 1,
           comments: 1,
           profilePicture: '$userInfo.profilePicture',
           first_name: '$userInfo.first_name',
@@ -240,7 +237,7 @@ export const getFilteredPosts = async (req, res) => {
           createdAt: 1,
           userId: 1,
           mediaUrls: 1,
-          likes: 1,
+          likedBy: 1,
           comments: 1,
           profilePicture: '$userInfo.profilePicture',
           first_name: '$userInfo.first_name',

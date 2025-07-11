@@ -6,5 +6,5 @@ const router = express.Router();
 router.post('/api/posts', createPost);
 router.get('/api/posts', getAllPosts);
 router.delete('/api/posts/:id', deletePost);
-router.post('/api/posts//like',likeDislike);
+router.post('/api/posts/like',likeDislike);
 export default router;
