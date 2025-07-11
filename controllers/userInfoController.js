@@ -3,7 +3,7 @@ import UserInfo from "../models/UserInfo.js";
 export const updateUserInfo = async (req, res) => {
   //const { userId, updates } = req.body;
   const userId = req.params.userId || req.body.userId;
-  const updates = req.body.updates || req.body; // תמיכה בשני פורמטים
+  const updates = req.body.updates || req.body; 
 
   try {
     const updatedInfo = await UserInfo.findOneAndUpdate(
@@ -19,9 +19,6 @@ export const updateUserInfo = async (req, res) => {
 };
 
 export const followUser = async (req, res) => {
-  console.log('📩 Inside followUser controller');
-  console.log('📦 Follower ID:', req.body.followerId);
-  console.log('📦 Followed ID:', req.body.followedId);
   try {
     const { followerId, followedId } = req.body;
 
@@ -53,9 +50,6 @@ export const followUser = async (req, res) => {
 };
 
 export const unfollowUser = async (req, res) => {
-  console.log('📤 Inside unfollowUser controller');
-  console.log('📦 Follower ID:', req.body.followerId);
-  console.log('📦 Followed ID:', req.body.followedId);
 
   try {
     const { followerId, followedId } = req.body;
@@ -67,19 +61,11 @@ export const unfollowUser = async (req, res) => {
       return res.status(404).json({ error: "One of the users not found" });
     }
 
-    console.log("🔍 Before unfollow:");
-    console.log("→ viewedUser.followers:", viewedUser.followers);
-    console.log("→ currentUser.followingUsers:", currentUser.followingUsers);
-
     // הסרה של followerId ממערך העוקבים של המשתמש הנצפה
     viewedUser.followers = viewedUser.followers.filter(id => id.toString() !== followerId);
 
     // הסרה של followedId ממערך הנעקבים של המשתמש העוקב
     currentUser.followingUsers = currentUser.followingUsers.filter(id => id.toString() !== followedId);
-
-    console.log("🧹 After unfollow:");
-    console.log("→ viewedUser.followers:", viewedUser.followers);
-    console.log("→ currentUser.followingUsers:", currentUser.followingUsers);
 
     await viewedUser.save();
     await currentUser.save();
@@ -88,6 +74,28 @@ export const unfollowUser = async (req, res) => {
   } catch (err) {
     console.error("Unfollow error:", err);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getFollowers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UserInfo.findOne({ userId });
+    const followers = await UserInfo.find({ userId: { $in: user.followers } });
+    res.json(followers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch followers' });
+  }
+};
+
+export const getFollowing = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UserInfo.findOne({ userId });
+    const following = await UserInfo.find({ userId: { $in: user.followingUsers } });
+    res.json(following);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch following users' });
   }
 };
 
