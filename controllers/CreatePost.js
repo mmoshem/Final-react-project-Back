@@ -1,3 +1,4 @@
+// controllers/CreatePost.js
 import Post from "../models/PostModel.js";
 import UserInfo from "../models/UserInfo.js";
 import cloudinary from '../config/cloudinary.js';
@@ -9,7 +10,6 @@ export const createPost = async (req, res) => {
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
-    
     const newPost = await Post.create({
       userId,
       content,
@@ -56,9 +56,57 @@ export const getAllPosts = async (req, res) => {
       },
     ]);
     res.json(posts);
+    
   } catch (error) {
-    console.error("Error fetching posts:", error);
-    res.status(500).json({ message: "Failed to fetch posts" });
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ message: "Failed to fetch user posts" });
+  }
+};
+
+export const updatePost = async (req, res) => {
+  try {
+    const { postId, userId, content, mediaUrls, removedMediaUrls } = req.body;
+    
+    if (!postId || !userId || !content) {
+      return res.status(400).json({ message: "postId, userId, and content are required" });
+    }
+
+    // Check if post exists and belongs to user
+    const existingPost = await Post.findOne({ _id: postId, userId });
+    if (!existingPost) {
+      return res.status(404).json({ message: "Post not found or not authorized" });
+    }
+
+    // Delete removed media from Cloudinary if any
+    if (Array.isArray(removedMediaUrls) && removedMediaUrls.length > 0) {
+      for (const url of removedMediaUrls) {
+        const publicId = extractPublicId(url);
+        const resourceType = getResourceType(url);
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+          } catch (err) {
+            console.error('Failed to delete media from Cloudinary:', err);
+          }
+        }
+      }
+    }
+
+    // Update the post
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      {
+        content,
+        mediaUrls: mediaUrls || [],
+        editedAt: new Date()
+      },
+      { new: true } //return the updated and not the one before the update
+    );
+
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    console.error("Error updating post:", error);
+    res.status(500).json({ message: "Failed to update post" });
   }
 };
 
@@ -277,49 +325,3 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-export const updatePost = async (req, res) => {
-  try {
-    const { postId, userId, content, mediaUrls, removedMediaUrls } = req.body;
-    
-    if (!postId || !userId || !content) {
-      return res.status(400).json({ message: "postId, userId, and content are required" });
-    }
-
-    // Check if post exists and belongs to user
-    const existingPost = await Post.findOne({ _id: postId, userId });
-    if (!existingPost) {
-      return res.status(404).json({ message: "Post not found or not authorized" });
-    }
-
-    // Delete removed media from Cloudinary if any
-    if (Array.isArray(removedMediaUrls) && removedMediaUrls.length > 0) {
-      for (const url of removedMediaUrls) {
-        const publicId = extractPublicId(url);
-        const resourceType = getResourceType(url);
-        if (publicId) {
-          try {
-            await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
-          } catch (err) {
-            console.error('Failed to delete media from Cloudinary:', err);
-          }
-        }
-      }
-    }
-
-    // Update the post
-    const updatedPost = await Post.findByIdAndUpdate(
-      postId,
-      {
-        content,
-        mediaUrls: mediaUrls || [],
-        editedAt: new Date()
-      },
-      { new: true } //return the updated and not the one before the update
-    );
-
-    res.status(200).json(updatedPost);
-  } catch (error) {
-    console.error("Error updating post:", error);
-    res.status(500).json({ message: "Failed to update post" });
-  }
-};
