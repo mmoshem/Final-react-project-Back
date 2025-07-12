@@ -62,31 +62,28 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-export const deletePost = async (req, res) => {
-  console.log('DELETE /api/posts/:id called');
-  console.log('req.params:', req.params);
-  console.log('req.body:', req.body);
-  function extractPublicId(url) {
-    if (!url) {
-        console.warn('extractPublicId: URL is null or empty.');
-        return null;
-    }
-    const parts = url.split('/');
-    const uploadIndex = parts.indexOf('upload');
+// Helper functions for Cloudinary operations
+function extractPublicId(url) {
+  if (!url) {
+      console.warn('extractPublicId: URL is null or empty.');
+      return null;
+  }
+  const parts = url.split('/');
+  const uploadIndex = parts.indexOf('upload');
 
-    if (uploadIndex === -1 || parts.length <= uploadIndex + 1) {
-        return null; 
-    }
-    const publicIdStartIndex = uploadIndex + 2;
+  if (uploadIndex === -1 || parts.length <= uploadIndex + 1) {
+      return null; 
+  }
+  const publicIdStartIndex = uploadIndex + 2;
 
-    if (publicIdStartIndex >= parts.length) {
-        return null;
-    }
+  if (publicIdStartIndex >= parts.length) {
+      return null;
+  }
 
-    const publicIdSegments = parts.slice(publicIdStartIndex);
-    const publicIdWithExtension = publicIdSegments.join('/');
-    const publicId = publicIdWithExtension.split('.')[0]; 
-    return publicId;
+  const publicIdSegments = parts.slice(publicIdStartIndex);
+  const publicIdWithExtension = publicIdSegments.join('/');
+  const publicId = publicIdWithExtension.split('.')[0]; 
+  return publicId;
 }
 
 function getResourceType(url) {
@@ -95,13 +92,17 @@ function getResourceType(url) {
   return videoExtensions.some(ext => url.toLowerCase().endsWith(ext)) ? 'video' : 'image';
 }
 
+export const deletePost = async (req, res) => {
+  console.log('DELETE /api/posts/:id called');
+  console.log('req.params:', req.params);
+  console.log('req.body:', req.body);
+
   try {
     const { id } = req.params;
     const { userId, mediaUrls } = req.body;
     if (!id || !userId) {
       return res.status(400).json({ message: 'Post ID and userId are required' });
     }
-    // Delete media from Cloudinary if mediaUrls are provided
     if (Array.isArray(mediaUrls)) {
       for (const url of mediaUrls) {
         console.log("Attempting to delete media URL:", url);
@@ -273,5 +274,52 @@ export const getUserPosts = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user posts:", error);
     res.status(500).json({ message: "Failed to fetch user posts" });
+  }
+};
+
+export const updatePost = async (req, res) => {
+  try {
+    const { postId, userId, content, mediaUrls, removedMediaUrls } = req.body;
+    
+    if (!postId || !userId || !content) {
+      return res.status(400).json({ message: "postId, userId, and content are required" });
+    }
+
+    // Check if post exists and belongs to user
+    const existingPost = await Post.findOne({ _id: postId, userId });
+    if (!existingPost) {
+      return res.status(404).json({ message: "Post not found or not authorized" });
+    }
+
+    // Delete removed media from Cloudinary if any
+    if (Array.isArray(removedMediaUrls) && removedMediaUrls.length > 0) {
+      for (const url of removedMediaUrls) {
+        const publicId = extractPublicId(url);
+        const resourceType = getResourceType(url);
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+          } catch (err) {
+            console.error('Failed to delete media from Cloudinary:', err);
+          }
+        }
+      }
+    }
+
+    // Update the post
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      {
+        content,
+        mediaUrls: mediaUrls || [],
+        editedAt: new Date()
+      },
+      { new: true } //return the updated and not the one before the update
+    );
+
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    console.error("Error updating post:", error);
+    res.status(500).json({ message: "Failed to update post" });
   }
 };
