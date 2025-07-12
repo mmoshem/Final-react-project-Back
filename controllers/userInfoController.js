@@ -99,26 +99,46 @@ export const getFollowing = async (req, res) => {
   }
 };
 
-
 export const searchUsers = async (req, res) => {
   try {
-    const { q } = req.query; // q is the search query
-    if (!q || q.trim() === '') {
-      return res.json([]);
+    const {
+      q,
+      Location,
+      Company,
+      University
+    } = req.query;
+
+    const query = {};
+
+    // חיפוש לפי שם פרטי או משפחה
+    if (q && q.trim() !== '') {
+      query.$or = [
+        { first_name: { $regex: '^' + q, $options: 'i' } },
+        { last_name: { $regex: '^' + q, $options: 'i' } }
+      ];
     }
 
-    // Search for users by first_name, last_name, or email
-    const users = await UserInfo.find({
-      $or: [
-      { first_name: { $regex: '^' + q, $options: 'i' } }, // starts with, case-insensitive
-      { last_name: { $regex: '^' + q, $options: 'i' } },
-      ]
-    }).limit(10);
+    // סינון לפי עיר בתוך location.city
+    if (Location) {
+      query['location.city'] = Location;
+    }
 
+    // סינון לפי חברה מתוך experience (מערך של אובייקטים)
+    if (Company) {
+      query['experience.company'] = Company;
+    }
+
+    // סינון לפי אוניברסיטה מתוך education
+    if (University) {
+      query['education.university'] = University;
+    }
+
+    const users = await UserInfo.find(query).limit(20);
     return res.json(users);
   } catch (error) {
     console.error('Error searching users:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
