@@ -1,3 +1,4 @@
+// controllers/CreatePost.js
 import Post from "../models/PostModel.js";
 
 export const createPost = async (req, res) => {
@@ -6,13 +7,15 @@ export const createPost = async (req, res) => {
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
+
     const newPost = await Post.create({
       userId,
       content,
       imageUrl: imageUrl || null,
-      likes: 0,
-      comments: []
+      likes: [],  // default as array
+      comments: [],
     });
+
     res.status(201).json(newPost);
   } catch (error) {
     console.error("Error creating post:", error);
@@ -22,18 +25,24 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
   try {
-    // Aggregate posts with user info
+    console.log('Fetching all posts...');
+
     const posts = await Post.aggregate([
+      { $match: { groupId: null } }, // Only posts not in groups
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
-          from: 'userinfos', // collection name in MongoDB (lowercase, plural)
+          from: 'userinfos', // Updated collection name
           localField: 'userId',
           foreignField: 'userId',
-          as: 'userInfo',
-        },
+          as: 'userDetails'
+        }
       },
-      { $unwind: '$userInfo' },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ["$userDetails", 0] }
+        }
+      },
       {
         $project: {
           _id: 1,
@@ -43,13 +52,15 @@ export const getAllPosts = async (req, res) => {
           imageUrl: 1,
           likes: 1,
           comments: 1,
-          profilePicture: '$userInfo.profilePicture',
-          first_name: '$userInfo.first_name',
-          last_name: '$userInfo.last_name',
-          editedAt: 1, 
-        },
-      },
+          editedAt: 1,
+          "user.first_name": 1,
+          "user.last_name": 1,
+          "user.profilePicture": 1
+        }
+      }
     ]);
+
+    console.log('Found posts:', posts.length);
     res.json(posts);
   } catch (error) {
     console.error("Error fetching posts:", error);

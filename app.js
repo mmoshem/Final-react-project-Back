@@ -27,10 +27,11 @@ app.use(bodyParser.json());
 connectDB();
 
 // Routes
+app.use(groupSearchRoutes);
 app.use(groupRoutes);
 app.use(groupPostRoutes);
 app.use(groupMemberRoutes);
-app.use(groupSearchRoutes);app.use(userRoutes);
+app.use(userRoutes);
 app.use(companyRoutes);
 app.use(authRoutes);
 app.use(userInfoRoutes);

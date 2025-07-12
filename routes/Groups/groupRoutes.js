@@ -19,7 +19,7 @@ router.get('/api/groups/:id', async (req, res) => {
         const group = await Group.findById(req.params.id)
             .populate('creator', 'name')
             .populate('members', 'name')
-            .populate('pendingRequests.userId', 'name');
+            .populate('pendingRequests.userId', 'name email profilePicture');
         
         if (!group) {
             return res.status(404).json({ message: 'Group not found' });

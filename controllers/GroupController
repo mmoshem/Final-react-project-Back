@@ -1,0 +1,44 @@
+import Group from '../models/GroupModel.js';
+import Post from '../models/PostModel.js';
+
+export const getGroupPosts = async (req, res) => {
+  const { groupId } = req.params;
+  try {
+    const posts = await Post.aggregate([
+      { $match: { groupId: groupId } },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'userinfos',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'userDetails'
+        }
+      },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ["$userDetails", 0] }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          createdAt: 1,
+          userId: 1,
+          imageUrl: 1,
+          likes: 1,
+          comments: 1,
+          "user.first_name": 1,
+          "user.last_name": 1,
+          "user.profilePicture": 1
+        }
+      }
+    ]);
+
+    res.json(posts);
+  } catch (error) {
+    console.error('Error fetching group posts:', error);
+    res.status(500).json({ message: 'Failed to get group posts' });
+  }
+};
