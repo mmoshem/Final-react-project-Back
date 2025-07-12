@@ -23,11 +23,13 @@ app.use(bodyParser.json());
 // DB connection
 connectDB();
 
+
 // Routes
 app.use(userRoutes);
 app.use(companyRoutes);
 app.use(authRoutes);
-app.use(userInfoRoutes);
+//app.use(userInfoRoutes);
+app.use('/api/userinfo', userInfoRoutes);
 app.use(postRoutes);
 //
 app.use(uploadRoutes);

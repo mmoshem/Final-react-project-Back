@@ -32,6 +32,7 @@ const userInfoSchema = new mongoose.Schema({
   ],
   profilePicture: { type: String, default: '' },
   followingUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   followingPages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Page' }]
 }, {
   timestamps: true // adds createdAt and updatedAt automatically
