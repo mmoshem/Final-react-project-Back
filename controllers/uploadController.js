@@ -3,7 +3,7 @@ import cloudinary from '../config/cloudinary.js';
 
 const upload = multer({
   storage: multer.memoryStorage(), // Store files in memory for Cloudinary upload
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 90 * 1024 * 1024 }
 });
 
 

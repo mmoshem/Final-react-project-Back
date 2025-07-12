@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import UserInfo from "../models/UserInfo.js";
 import mongoose from "mongoose";
 
+import bcrypt from 'bcryptjs'
 const handleUserCommand = async (req, res) => {
   const { command, data } = req.body;
 
@@ -14,9 +15,11 @@ const handleUserCommand = async (req, res) => {
             .status(400)
             .json({ message: "User with current email already exists" });
         }
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(data.password, saltRounds);
         const newUser = new User({
           email: data.email,
-          password: data.password,
+          password: hashedPassword
         });
         await newUser.save();
         await UserInfo.create({
@@ -71,5 +74,30 @@ const getUserInfo = async (req, res) => {
 };
 
 
+const getFriendsInfo = async (req, res) => {
+  try {
+    const ids = req.body.allFriendsId;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No friend IDs provided" });
+    }
+
+    // Fetch all friends in a single query using $in
+    const friends = await UserInfo.find({ userId: { $in: ids } });
+
+    // Map to desired format
+    const result = friends.map(friend => ({
+      userId: friend.userId,
+      profilePicture: friend.profilePicture,
+      firstName: friend.first_name,
+      lastName: friend.last_name,
+    }));
+
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ message: `Something went wrong: ${err}` });
+  }
+};
+
+
 // module.exports = { handleUserCommand };
-export default { handleUserCommand, getUserInfo };
+export default { handleUserCommand, getUserInfo, getFriendsInfo };

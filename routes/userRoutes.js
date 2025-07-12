@@ -5,10 +5,11 @@ const router = express.Router();
 // import { handleUserCommand } from '../controllers/userController.js';
 import userController from '../controllers/userController.js';
 import { searchUsers } from '../controllers/userInfoController.js';
+const { handleUserCommand, getUserInfo, getFriendsInfo} = userController;
 
-const { handleUserCommand, getUserInfo } = userController;
 router.post('/api/users', handleUserCommand);
 router.get('/api/userinfo/:userId', getUserInfo);
 router.get('/api/users/search', searchUsers);
+router.post('/api/getFriendsInfo', getFriendsInfo);
 // module.exports = router;
 export default router;
