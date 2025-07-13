@@ -1,5 +1,6 @@
 import express from 'express';
 import Group from '../../models/Group.js';
+import UserInfo from '../../models/UserInfo.js';
 
 const router = express.Router();
 
@@ -27,6 +28,13 @@ router.post('/api/groups/:id/join', async (req, res) => {
         // Update member count
         group.memberCount = group.members.length;
         await group.save();
+        
+        // Update UserInfo to add group to followingGroups
+        await UserInfo.findOneAndUpdate(
+            { userId: userId },
+            { $addToSet: { followingGroups: groupId } },
+            { upsert: true }
+        );
         
         // Return updated group
         const updatedGroup = await Group.findById(groupId)
@@ -67,6 +75,12 @@ router.post('/api/groups/:id/leave', async (req, res) => {
         // Update member count
         group.memberCount = group.members.length;
         await group.save();
+        
+        // Update UserInfo to remove group from followingGroups
+        await UserInfo.findOneAndUpdate(
+            { userId: userId },
+            { $pull: { followingGroups: groupId } }
+        );
         
         // Return updated group
         const updatedGroup = await Group.findById(groupId)

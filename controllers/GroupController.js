@@ -12,28 +12,25 @@ export const getGroupPosts = async (req, res) => {
           from: 'userinfos',
           localField: 'userId',
           foreignField: 'userId',
-          as: 'userDetails'
-        }
+          as: 'userInfo',
+        },
       },
-      {
-        $addFields: {
-          user: { $arrayElemAt: ["$userDetails", 0] }
-        }
-      },
+      { $unwind: '$userInfo' },
       {
         $project: {
           _id: 1,
           content: 1,
           createdAt: 1,
           userId: 1,
-          imageUrl: 1,
-          likes: 1,
+          mediaUrls: 1,
+          likedBy: 1,
           comments: 1,
-          "user.first_name": 1,
-          "user.last_name": 1,
-          "user.profilePicture": 1
-        }
-      }
+          profilePicture: '$userInfo.profilePicture',
+          first_name: '$userInfo.first_name',
+          last_name: '$userInfo.last_name',
+          editedAt: 1, 
+        },
+      },
     ]);
 
     res.json(posts);

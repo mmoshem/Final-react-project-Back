@@ -3,17 +3,20 @@ import Post from "../models/PostModel.js";
 import UserInfo from "../models/UserInfo.js";
 import cloudinary from '../config/cloudinary.js';
 import mongoose, { Types } from 'mongoose';
+import Group from '../models/Group.js'; // <-- Add this import
 
 export const createPost = async (req, res) => {
   try {
-    const { userId, content, mediaUrls } = req.body;
+    const { userId, content, mediaUrls, groupId } = req.body;
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
+    
     const newPost = await Post.create({
       userId,
       content,
-      mediaUrls: mediaUrls || null,
+      mediaUrls: mediaUrls || [],
+      groupId: groupId || null, // Add groupId if provided
       likedBy: [],
       comments: []
     });
@@ -27,8 +30,120 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
   try {
-    // Aggregate posts with user info
+    const { 
+      userId, 
+      groupId, 
+      filterType = 'all', // 'all', 'my', 'followed', 'groups', 'myInGroups', 'followedInGroups', 'myGroupsPosts'
+      startDate, 
+      endDate, 
+      contentFilter, 
+      includeFriends 
+    } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+    
+    let matchStage = {};
+    
+    // Handle different filter types
+    switch (filterType) {
+      case 'my':
+        // Only user's own posts
+        matchStage.userId = new mongoose.Types.ObjectId(userId);
+        break;
+        
+      case 'followed':
+        // User's posts + followed users' posts
+        const userInfo = await UserInfo.findOne({ userId: userId });
+        const followedUsers = userInfo ? userInfo.followingUsers : [];
+        matchStage.userId = { 
+          $in: [new mongoose.Types.ObjectId(userId), ...followedUsers.map(id => new mongoose.Types.ObjectId(id))]
+        };
+        matchStage.groupId = { $exists: false }; // Exclude group posts
+        break;
+        
+      case 'groups':
+        // Posts from followed groups
+        const userInfoForGroups = await UserInfo.findOne({ userId: userId });
+        const followedGroups = userInfoForGroups ? userInfoForGroups.followingGroups : [];
+        matchStage.groupId = { $in: followedGroups.map(id => new mongoose.Types.ObjectId(id)) };
+        break;
+        
+      case 'myInGroups':
+        // User's posts in groups
+        matchStage.userId = new mongoose.Types.ObjectId(userId);
+        matchStage.groupId = { $exists: true, $ne: null };
+        break;
+        
+      case 'followedInGroups':
+        // Followed users' posts in groups
+        const userInfoForFollowed = await UserInfo.findOne({ userId: userId });
+        const followedUsersInGroups = userInfoForFollowed ? userInfoForFollowed.followingUsers : [];
+        matchStage.userId = { 
+          $in: followedUsersInGroups.map(id => new mongoose.Types.ObjectId(id))
+        };
+        matchStage.groupId = { $exists: true, $ne: null };
+        break;
+        
+      case 'group':
+        // Posts from specific group
+        if (groupId) {
+          matchStage.groupId = new mongoose.Types.ObjectId(groupId);
+        }
+        break;
+        
+      case 'myGroupsPosts':
+        // Posts from groups the user created
+        const myGroups = await Group.find({ creator: userId }).select('_id');
+        const myGroupIds = myGroups.map(g => g._id);
+        matchStage.groupId = { $in: myGroupIds };
+        break;
+        
+      default: // 'all'
+        // All posts: user's posts + followed users' posts + followed groups' posts
+        const userInfoForAll = await UserInfo.findOne({ userId: userId });
+        const followedUsersForAll = userInfoForAll ? userInfoForAll.followingUsers : [];
+        const followedGroupsForAll = userInfoForAll ? userInfoForAll.followingGroups : [];
+        
+        const allUserIds = [new mongoose.Types.ObjectId(userId), ...followedUsersForAll.map(id => new mongoose.Types.ObjectId(id))];
+        
+        matchStage = {
+          $or: [
+            { userId: { $in: allUserIds } }, // User's and followed users' posts
+            { groupId: { $in: followedGroupsForAll.map(id => new mongoose.Types.ObjectId(id)) } } // Followed groups' posts
+          ]
+        };
+        break;
+    }
+    
+    // Date filtering
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+      if (startDate) {
+        const startDateObj = new Date(startDate);
+        if (isNaN(startDateObj.getTime())) {
+          return res.status(400).json({ message: "Invalid startDate format. Use YYYY-MM-DD" });
+        }
+        matchStage.createdAt.$gte = startDateObj;
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        if (isNaN(endDateObj.getTime())) {
+          return res.status(400).json({ message: "Invalid endDate format. Use YYYY-MM-DD" });
+        }
+        matchStage.createdAt.$lte = endDateObj;
+      }
+    }
+    
+    // Content filtering
+    if (contentFilter) {
+      matchStage.content = { $regex: contentFilter, $options: 'i' };
+    }
+    
+    // Aggregate posts with user info and group info
     const posts = await Post.aggregate([
+      { $match: matchStage },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -40,26 +155,39 @@ export const getAllPosts = async (req, res) => {
       },
       { $unwind: '$userInfo' },
       {
+        $lookup: {
+          from: 'groups',
+          localField: 'groupId',
+          foreignField: '_id',
+          as: 'groupInfo',
+        },
+      },
+      {
         $project: {
           _id: 1,
           content: 1,
           createdAt: 1,
+          updatedAt: 1,
           userId: 1,
           mediaUrls: 1,
+          imageUrl: 1, // For backward compatibility
+          groupId: 1,
+          groupInfo: { $arrayElemAt: ['$groupInfo', 0] },
           likedBy: 1,
           comments: 1,
+          editedAt: 1,
           profilePicture: '$userInfo.profilePicture',
           first_name: '$userInfo.first_name',
           last_name: '$userInfo.last_name',
-          editedAt: 1, 
         },
       },
     ]);
+    
     res.json(posts);
     
   } catch (error) {
-    console.error("Error fetching user posts:", error);
-    res.status(500).json({ message: "Failed to fetch user posts" });
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ message: "Failed to fetch posts" });
   }
 };
 
