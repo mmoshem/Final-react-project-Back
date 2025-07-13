@@ -26,11 +26,7 @@ PostModel.index({ content: 'text' }); // For text search
 PostModel.index({ createdAt: -1 }); // For general date sorting
 
 
-// Indexes for optimal query performance
-PostModel.index({ userId: 1, createdAt: -1 }); // For user posts with date filtering (also covers simple userId queries)
-PostModel.index({ userId: 1, mediaUrls: 1 }); // For content filtering (media posts)
-PostModel.index({ content: 'text' }); // For text search
-PostModel.index({ createdAt: -1 }); // For general date sorting
+
 
 const Post = mongoose.model('post', PostModel );//
 
