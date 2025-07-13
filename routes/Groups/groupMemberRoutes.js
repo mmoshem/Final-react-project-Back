@@ -1,6 +1,6 @@
 import express from 'express';
 import Group from '../../models/Group.js';
-
+import UserInfo from '../../models/UserInfo.js';
 const router = express.Router();
 
 // POST join group (public groups)
@@ -22,6 +22,11 @@ router.post('/api/groups/:id/join', async (req, res) => {
         // Add user to members array
         if (userId) {
             group.members.push(userId);
+            await UserInfo.findOneAndUpdate(
+                { userId: userId },
+                { $addToSet: { followingGroups: groupId } } // $addToSet prevents duplicates
+
+            );
         }
         
         // Update member count
@@ -62,6 +67,10 @@ router.post('/api/groups/:id/leave', async (req, res) => {
         // Remove user from members array
         if (userId) {
             group.members = group.members.filter(memberId => !memberId.equals(userId));
+             await UserInfo.findOneAndUpdate(
+             { userId: userId },
+             { $pull: { followingGroups: groupId } }
+            );
         }
         
         // Update member count

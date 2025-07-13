@@ -27,34 +27,100 @@ export const createPost = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
   try {
+
+    const {groupid, userid, fillter}=req.params;
     // Aggregate posts with user info
-    const posts = await Post.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: 'userinfos',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'userInfo',
-        },
-      },
-      { $unwind: '$userInfo' },
-      {
-        $project: {
-          _id: 1,
-          content: 1,
-          createdAt: 1,
-          userId: 1,
-          mediaUrls: 1,
-          likedBy: 1,
-          comments: 1,
-          profilePicture: '$userInfo.profilePicture',
-          first_name: '$userInfo.first_name',
-          last_name: '$userInfo.last_name',
-          editedAt: 1, 
-        },
-      },
-    ]);
+    let posts = [];
+    if(groupid==='none'){
+      switch(fillter){
+
+        case 'none':
+          if (mongoose.Types.ObjectId.isValid(userid)) {
+            const userInfo = await UserInfo.findOne({ userId: new mongoose.Types.ObjectId(userid) });
+
+            let followingUsers = [];
+            let followingGroups = [];
+            if (userInfo) {
+              followingUsers = userInfo.followingUsers || [];
+              followingGroups = userInfo.followingGroups || [];
+            }
+
+            // Build the $or conditions for aggregation
+            const orConditions = [
+              { userId: new mongoose.Types.ObjectId(userid) }
+            ];
+            if (followingUsers.length > 0) {
+              orConditions.push({ userId: { $in: followingUsers } });
+            }
+            if (followingGroups.length > 0) {
+              orConditions.push({ groupId: { $in: followingGroups } });
+            }
+
+            posts = await Post.aggregate([
+              { $match: { $or: orConditions } },
+              { $sort: { createdAt: -1 } },
+              {
+                $lookup: {
+                  from: 'userinfos',
+                  localField: 'userId',
+                  foreignField: 'userId',
+                  as: 'userInfo',
+                },
+              },
+              { $unwind: '$userInfo' },
+              {
+                $project: {
+                  _id: 1,
+                  content: 1,
+                  createdAt: 1,
+                  userId: 1,
+                  groupId: 1,
+                  mediaUrls: 1,
+                  likedBy: 1,
+                  comments: 1,
+                  profilePicture: '$userInfo.profilePicture',
+                  first_name: '$userInfo.first_name',
+                  last_name: '$userInfo.last_name',
+                  editedAt: 1,
+                },
+              },
+            ]);
+          } else {
+            posts = [];
+          }
+          break;
+        case 'onlyGroupsIFollow':
+          posts = await Post.aggregate([
+          { $sort: { createdAt: -1 } },
+          {
+            $lookup: {
+              from: 'userinfos',
+              localField: 'userId',
+              foreignField: 'userId',
+              as: 'userInfo',
+            },
+          },
+          { $unwind: '$userInfo' },
+          {
+            $project: {
+              _id: 1,
+              content: 1,
+              createdAt: 1,
+              userId: 1,
+              mediaUrls: 1,
+              likedBy: 1,
+              comments: 1,
+              profilePicture: '$userInfo.profilePicture',
+              first_name: '$userInfo.first_name',
+              last_name: '$userInfo.last_name',
+              editedAt: 1, 
+            },
+          },
+        ]);
+        break;
+
+      }
+    }
     res.json(posts);
     
   } catch (error) {

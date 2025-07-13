@@ -4,7 +4,7 @@ import { createPost, getAllPosts, deletePost, likeDislike, updatePost } from '..
 const router = express.Router();
 
 router.post('/api/posts', createPost);
-router.get('/api/posts', getAllPosts);
+router.get('/api/posts/:groupid/:userid/:fillter', getAllPosts);
 router.delete('/api/posts/:id', deletePost);
 router.post('/api/posts/like',likeDislike);
 router.put('/api/posts/update', updatePost);

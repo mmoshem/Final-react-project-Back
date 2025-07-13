@@ -29,7 +29,7 @@ const handleUserCommand = async (req, res) => {
           birthDate: null,
           profilePicture: 'https://www.w3schools.com/howto/img_avatar.png',
           followingUsers: [],
-          followingPages: []
+          followingGoups: []//
         });
 
 
