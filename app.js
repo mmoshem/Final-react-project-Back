@@ -13,6 +13,7 @@ import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import profileUploadRoutes from './routes/profileUploadRoute.js';
+import filterOptionsRoutes from './routes/filterOptionsRoutes.js';
 
 
 const app = express();
@@ -34,7 +35,7 @@ app.use('/api/userinfo', userInfoRoutes);
 app.use(postRoutes);
 
 app.use(uploadRoutes);
-
+app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api', profileUploadRoutes);
 
 
