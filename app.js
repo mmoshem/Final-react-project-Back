@@ -14,6 +14,7 @@ import postRoutes from './routes/postRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import profileUploadRoutes from './routes/profileUploadRoute.js';
 import filterOptionsRoutes from './routes/filterOptionsRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
 
 
 const app = express();
@@ -37,6 +38,7 @@ app.use(postRoutes);
 app.use(uploadRoutes);
 app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api', profileUploadRoutes);
+app.use('/api/quiz', quizRoutes);
 
 
 
