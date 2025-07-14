@@ -1,0 +1,27 @@
+[
+  {
+    "questionText": "What does 'NaN' stand for in JavaScript?",
+    "options": ["Not a Node", "Not a Number", "No Assigned Name", "Next Available Number"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "Which keyword is used to define a constant in JavaScript?",
+    "options": ["let", "var", "const", "define"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "questionText": "What is the result of 3 + '3' in JavaScript?",
+    "options": ["6", "33", "Error", "NaN"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "Which HTML tag is used to link a JavaScript file?",
+    "options": ["<js>", "<link>", "<script>", "<javascript>"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "questionText": "Which method converts a JSON string into a JavaScript object?",
+    "options": ["JSON.parse()", "JSON.stringify()", "parseJSON()", "toObject()"],
+    "correctAnswerIndex": 0
+  }
+]

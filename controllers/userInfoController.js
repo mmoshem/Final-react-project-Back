@@ -103,9 +103,10 @@ export const searchUsers = async (req, res) => {
   try {
     const {
       q,
-      Location,
+      City,
       Company,
-      University
+      University,
+      experienceLevel
     } = req.query;
 
     const query = {};
@@ -119,8 +120,8 @@ export const searchUsers = async (req, res) => {
     }
 
     // סינון לפי עיר בתוך location.city
-    if (Location) {
-      query['location.city'] = Location;
+    if (City) {
+      query['location.city'] = City;
     }
 
     // סינון לפי חברה מתוך experience (מערך של אובייקטים)
@@ -131,6 +132,9 @@ export const searchUsers = async (req, res) => {
     // סינון לפי אוניברסיטה מתוך education
     if (University) {
       query['education.university'] = University;
+    }
+    if (experienceLevel) {
+      query['experienceLevel'] = experienceLevel;
     }
 
     const users = await UserInfo.find(query).limit(20);
