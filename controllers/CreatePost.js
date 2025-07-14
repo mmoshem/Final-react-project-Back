@@ -6,7 +6,7 @@ import mongoose, { Types } from 'mongoose';
 
 export const createPost = async (req, res) => {
   try {
-    const { userId, content, mediaUrls } = req.body;
+    const { userId, content, mediaUrls, groupId } = req.body;
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
@@ -14,6 +14,7 @@ export const createPost = async (req, res) => {
       userId,
       content,
       mediaUrls: mediaUrls || null,
+      groupId: groupId || null,
       likedBy: [],
       comments: []
     });
@@ -119,6 +120,41 @@ export const getAllPosts = async (req, res) => {
         ]);
         break;
 
+      }
+    } else {
+      // Fetch all posts for the given groupId
+      if (mongoose.Types.ObjectId.isValid(groupid)) {
+        posts = await Post.aggregate([
+          { $match: { groupId: new mongoose.Types.ObjectId(groupid) } },
+          { $sort: { createdAt: -1 } },
+          {
+            $lookup: {
+              from: 'userinfos',
+              localField: 'userId',
+              foreignField: 'userId',
+              as: 'userInfo',
+            },
+          },
+          { $unwind: '$userInfo' },
+          {
+            $project: {
+              _id: 1,
+              content: 1,
+              createdAt: 1,
+              userId: 1,
+              groupId: 1,
+              mediaUrls: 1,
+              likedBy: 1,
+              comments: 1,
+              profilePicture: '$userInfo.profilePicture',
+              first_name: '$userInfo.first_name',
+              last_name: '$userInfo.last_name',
+              editedAt: 1,
+            },
+          },
+        ]);
+      } else {
+        posts = [];
       }
     }
     res.json(posts);

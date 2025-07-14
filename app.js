@@ -42,11 +42,6 @@ app.use('/api/quiz', quizRoutes);//
 
 console.log('All routes mounted successfully');
 
-// 404 handler - must be last
-app.use((req, res, next) => {
-    console.log('❌ Unhandled route:', req.method, req.originalUrl);
-    res.status(404).json({ message: 'Route not found' });
-});
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
