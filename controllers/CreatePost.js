@@ -3,6 +3,7 @@ import Post from "../models/PostModel.js";
 import UserInfo from "../models/UserInfo.js";
 import cloudinary from '../config/cloudinary.js';
 import mongoose, { Types } from 'mongoose';
+import Group from "../models/Group.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -253,6 +254,25 @@ export const deletePost = async (req, res) => {
     if (!id || !userId) {
       return res.status(400).json({ message: 'Post ID and userId are required' });
     }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    let canDelete = false;
+    // Check if the user is the post creator
+    if (post.userId.toString() === userId) {
+      canDelete = true;
+    }
+    // If the post is in a group, check if the user is the group creator/admin
+    if (post.groupId) {
+      const group = await Group.findById(post.groupId);
+      if (group && group.creator && group.creator.toString() === userId) {
+        canDelete = true;
+      }
+    }
+    if (!canDelete) {
+      return res.status(403).json({ message: 'Not authorized to delete this post' });
+    }
     if (Array.isArray(mediaUrls)) {
       for (const url of mediaUrls) {
         console.log("Attempting to delete media URL:", url);
@@ -267,11 +287,10 @@ export const deletePost = async (req, res) => {
         }
       }
     }
-    const deleted = await Post.deleteOne({ _id: id, userId });
+    const deleted = await Post.deleteOne({ _id: id });
     if (deleted.deletedCount === 0) {
       return res.status(404).json({ message: 'Post not found or not authorized' });
     }
-    
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
