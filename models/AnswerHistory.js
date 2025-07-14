@@ -22,7 +22,10 @@ const answerHistorySchema = new mongoose.Schema({
   answeredAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  correctCount: { type: Number, default: 0 },
+incorrectCount: { type: Number, default: 0 },
+lastAnsweredAt: { type: Date }
 });
 
 const AnswerHistory = mongoose.model('AnswerHistory', answerHistorySchema);

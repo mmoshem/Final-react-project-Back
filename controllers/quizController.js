@@ -45,17 +45,25 @@ export const submitAnswer = async (req, res) => {
 
     const isCorrect = question.correctAnswerIndex === selectedAnswerIndex;
 
-    const newAnswer = new AnswerHistory({
-      userId,
-      questionId,
-      selectedAnswerIndex,
-      isCorrect,
-    });
+    // עדכון או יצירה של תשובה עם מונים
+    await AnswerHistory.updateOne(
+      { userId, questionId },
+      {
+        $set: {
+          selectedAnswerIndex,
+          isCorrect,
+          lastAnsweredAt: new Date()
+        },
+        $inc: {
+          [isCorrect ? 'correctCount' : 'incorrectCount']: 1
+        }
+      },
+      { upsert: true }
+    );
 
-    await newAnswer.save();
     res.json({ message: 'Answer saved', isCorrect });
   } catch (error) {
-    console.error(error);
+    console.error('❌ Failed to save answer:', error);
     res.status(500).json({ error: 'Failed to save answer' });
   }
 };
