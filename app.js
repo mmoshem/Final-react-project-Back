@@ -1,5 +1,3 @@
-// const express = require('express');
-// const cors = require('cors');
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
@@ -13,11 +11,7 @@ import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import profileUploadRoutes from './routes/profileUploadRoute.js';
-import groupRoutes from './routes/Groups/groupRoutes.js';
-import groupPostRoutes from './routes/Groups/groupPostRoutes.js';
-import groupMemberRoutes from './routes/Groups/groupMemberRoutes.js';
-import groupSearchRoutes from './routes/Groups/groupSearchRoutes.js';
-
+import groupRoutes from './routes/groupRoutes.js';
 
 const app = express();
 
@@ -28,24 +22,28 @@ app.use(bodyParser.json());
 // DB connection
 connectDB();
 
+console.log('🔥 Starting backend server');
 
 // Routes
-app.use(groupSearchRoutes);
-app.use(groupRoutes);
-app.use(groupPostRoutes);
-app.use(groupMemberRoutes);
-app.use(userRoutes);
-app.use(companyRoutes);
-app.use(authRoutes);
-//app.use(userInfoRoutes);
-app.use('/api/userinfo', userInfoRoutes);
-app.use(postRoutes);
+app.use('/api/groups', groupRoutes);
+console.log('Group routes mounted at /api/groups');
 
-app.use(uploadRoutes);
+// Uncomment other routes as needed:
+ app.use(userRoutes);
+// app.use(companyRoutes);
+ app.use(authRoutes);
+// app.use('/api/userinfo', userInfoRoutes);
+ app.use(postRoutes);
+ app.use(uploadRoutes);
+ app.use('/api', profileUploadRoutes);
 
-app.use('/api', profileUploadRoutes);
+console.log('All routes mounted successfully');
 
-
+// 404 handler - must be last
+app.use((req, res, next) => {
+    console.log('❌ Unhandled route:', req.method, req.originalUrl);
+    res.status(404).json({ message: 'Route not found' });
+});
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
