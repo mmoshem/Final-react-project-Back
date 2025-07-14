@@ -6,7 +6,7 @@ import mongoose, { Types } from 'mongoose';
 
 export const createPost = async (req, res) => {
   try {
-    const { userId, content, mediaUrls } = req.body;
+    const { userId, content, mediaUrls, groupId } = req.body;
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
@@ -14,6 +14,7 @@ export const createPost = async (req, res) => {
       userId,
       content,
       mediaUrls: mediaUrls || null,
+      groupId: groupId || null,
       likedBy: [],
       comments: []
     });
