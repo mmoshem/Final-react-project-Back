@@ -32,7 +32,7 @@ console.log('Group routes mounted at /api/groups');
  app.use(userRoutes);
 // app.use(companyRoutes);
  app.use(authRoutes);
-// app.use('/api/userinfo', userInfoRoutes);
+ //app.use('/api/userinfo', userInfoRoutes);
  app.use(postRoutes);
  app.use(uploadRoutes);
  app.use('/api', profileUploadRoutes);

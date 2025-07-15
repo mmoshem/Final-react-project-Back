@@ -1,4 +1,7 @@
+import profileUploadController from '../controllers/profileUploadController.js';
+import { getGroupAnalytics } from '../controllers/GroupAnalyticsController.js';
 import express from 'express';
+import cloudinary from '../config/cloudinary.js';
 import {
     getAllGroups,
     getGroupById,
@@ -16,8 +19,9 @@ import {
     cancelJoinRequest,
     approveJoinRequest,
     rejectJoinRequest,
-    getGroupMembers,    // ✅ New function
-    removeMember        // ✅ New function
+    getGroupMembers,
+    removeMember
+    
 } from '../controllers/GroupMemberController.js';
 import {
     getGroupPosts,
@@ -27,37 +31,64 @@ import {
 
 const router = express.Router();
 
-// IMPORTANT: All specific routes MUST come before parameterized routes (/:id)
+// Log all requests to this router
+router.use((req, res, next) => {
+    console.log('🔥 GROUP ROUTER REQUEST:', req.method, req.originalUrl);
+    next();
+});
 
-// Search route (must be before /:id)
-router.get('/search', searchGroups);
-
-// Test route (can be removed if not needed)
+// Test route
 router.get('/test', (req, res) => {
+    console.log('🧪 Test route hit!');
     res.json({ message: '✅ Test route working!' });
 });
 
-// Creator/member routes (must be before /:id)
+// Test Cloudinary deletion
+router.get('/test-delete/:publicId', async (req, res) => {
+    try {
+        const publicId = req.params.publicId.replace('--', '/');
+        console.log('🧪 Testing deletion of:', publicId);
+        
+        const result = await cloudinary.uploader.destroy(publicId);
+        console.log('🧪 Cloudinary result:', result);
+        
+        res.json({ success: true, result, publicId });
+    } catch (error) {
+        console.error('🧪 Cloudinary error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// Search route
+router.get('/search', searchGroups);
+
+router.get('/:groupId/analytics', getGroupAnalytics);
+
+
+// Upload route
+router.post('/upload-group-picture',
+    profileUploadController.profileUploadMiddleware,
+    profileUploadController.uploadProfilePicture
+);
+
+// Creator/member routes
 router.get('/creator/:userId', getGroupsByCreator);
 router.get('/member/:userId', getGroupsByMember);
 
-// Root routes for getting all groups and creating groups
+// Root routes
 router.get('/', getAllGroups);
 router.post('/', createGroup);
 
-// PARAMETERIZED ROUTES - MUST BE LAST
-// These routes use :id parameter, so they must come after all specific routes
-
-// ✅ POSTS ROUTES FIRST (more specific - "posts" is a literal string)
+// Posts routes
 router.get('/:groupId/posts', getGroupPosts);
 router.post('/:groupId/posts', createGroupPost);
 router.delete('/:groupId/posts/:postId', deleteGroupPost);
 
-// ✅ MEMBERS ROUTES SECOND (more specific - "members" is a literal string)
-router.get('/:groupId/members', getGroupMembers);           
-router.delete('/:groupId/members/:userId', removeMember);   
+// Members routes
+router.get('/:groupId/members', getGroupMembers);
+router.delete('/:groupId/members/:userId', removeMember);
 
-// Membership operations (less specific - these match any path)
+// Membership operations
 router.post('/:id/approve-request', approveJoinRequest);
 router.post('/:id/reject-request', rejectJoinRequest);
 router.post('/:id/join', joinGroup);
@@ -65,9 +96,13 @@ router.post('/:id/leave', leaveGroup);
 router.post('/:id/request', requestJoinGroup);
 router.post('/:id/cancel-request', cancelJoinRequest);
 
-// CRUD endpoints with :id parameter - KEEP AT VERY BOTTOM (least specific)
+// CRUD endpoints
 router.get('/:id', getGroupById);
 router.put('/:id', updateGroup);
-router.delete('/:id', deleteGroup);
+router.delete('/:id', (req, res, next) => {
+    console.log('🚨 DELETE ROUTE HIT! Params:', req.params);
+    console.log('🚨 Calling deleteGroup function...');
+    deleteGroup(req, res, next);
+});
 
 export default router;
