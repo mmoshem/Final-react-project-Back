@@ -3,10 +3,11 @@ import Post from "../models/PostModel.js";
 import UserInfo from "../models/UserInfo.js";
 import cloudinary from '../config/cloudinary.js';
 import mongoose, { Types } from 'mongoose';
+import Group from "../models/Group.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { userId, content, mediaUrls } = req.body;
+    const { userId, content, mediaUrls, groupId } = req.body;
     if (!userId || !content) {
       return res.status(400).json({ message: "userId and content are required" });
     }
@@ -14,6 +15,7 @@ export const createPost = async (req, res) => {
       userId,
       content,
       mediaUrls: mediaUrls || null,
+      groupId: groupId || null,
       likedBy: [],
       comments: []
     });
@@ -120,6 +122,41 @@ export const getAllPosts = async (req, res) => {
         break;
 
       }
+    } else {
+      // Fetch all posts for the given groupId
+      if (mongoose.Types.ObjectId.isValid(groupid)) {
+        posts = await Post.aggregate([
+          { $match: { groupId: new mongoose.Types.ObjectId(groupid) } },
+          { $sort: { createdAt: -1 } },
+          {
+            $lookup: {
+              from: 'userinfos',
+              localField: 'userId',
+              foreignField: 'userId',
+              as: 'userInfo',
+            },
+          },
+          { $unwind: '$userInfo' },
+          {
+            $project: {
+              _id: 1,
+              content: 1,
+              createdAt: 1,
+              userId: 1,
+              groupId: 1,
+              mediaUrls: 1,
+              likedBy: 1,
+              comments: 1,
+              profilePicture: '$userInfo.profilePicture',
+              first_name: '$userInfo.first_name',
+              last_name: '$userInfo.last_name',
+              editedAt: 1,
+            },
+          },
+        ]);
+      } else {
+        posts = [];
+      }
     }
     res.json(posts);
     
@@ -217,6 +254,25 @@ export const deletePost = async (req, res) => {
     if (!id || !userId) {
       return res.status(400).json({ message: 'Post ID and userId are required' });
     }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    let canDelete = false;
+    // Check if the user is the post creator
+    if (post.userId.toString() === userId) {
+      canDelete = true;
+    }
+    // If the post is in a group, check if the user is the group creator/admin
+    if (post.groupId) {
+      const group = await Group.findById(post.groupId);
+      if (group && group.creator && group.creator.toString() === userId) {
+        canDelete = true;
+      }
+    }
+    if (!canDelete) {
+      return res.status(403).json({ message: 'Not authorized to delete this post' });
+    }
     if (Array.isArray(mediaUrls)) {
       for (const url of mediaUrls) {
         console.log("Attempting to delete media URL:", url);
@@ -231,11 +287,10 @@ export const deletePost = async (req, res) => {
         }
       }
     }
-    const deleted = await Post.deleteOne({ _id: id, userId });
+    const deleted = await Post.deleteOne({ _id: id });
     if (deleted.deletedCount === 0) {
       return res.status(404).json({ message: 'Post not found or not authorized' });
     }
-    
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);

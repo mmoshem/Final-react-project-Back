@@ -8,14 +8,14 @@ const userInfoSchema = new mongoose.Schema({
   last_name: { type: String, required: true },
   birthDate: { type: Date, default: null },
   gender: { type: String, default: '' },
-  position: { type: String, default: '' },
+  experienceLevel: { type: String, default: '' },
   headline: { type: String, default: '' },
   location: {
     city: { type: String, default: '' },
     country: { type: String, default: '' },
   },
   about: { type: String, default: '' },
-  isPrivate: { type: Boolean, default: false },
+  //isPrivate: { type: Boolean, default: false },
   education: [
     {
       university: { type: String, default: '' },
