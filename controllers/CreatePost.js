@@ -104,34 +104,105 @@ export const getAllPosts = async (req, res) => {
           }
           break;
         case 'onlyGroupsIFollow':
-          posts = await Post.aggregate([
-          { $sort: { createdAt: -1 } },
-          {
-            $lookup: {
-              from: 'userinfos',
-              localField: 'userId',
-              foreignField: 'userId',
-              as: 'userInfo',
-            },
-          },
-          { $unwind: '$userInfo' },
-          {
-            $project: {
-              _id: 1,
-              content: 1,
-              createdAt: 1,
-              userId: 1,
-              mediaUrls: 1,
-              likedBy: 1,
-              comments: 1,
-              profilePicture: '$userInfo.profilePicture',
-              first_name: '$userInfo.first_name',
-              last_name: '$userInfo.last_name',
-              editedAt: 1, 
-            },
-          },
-        ]);
-        break;
+          let followingGroups = [];
+          if (mongoose.Types.ObjectId.isValid(userid)) {
+            const userInfo = await UserInfo.findOne({ userId: new mongoose.Types.ObjectId(userid) });
+            if (userInfo) {
+              followingGroups = userInfo.followingGroups || [];
+            }
+          }
+          if (followingGroups.length > 0) {
+            posts = await Post.aggregate([
+              { $match: { groupId: { $in: followingGroups } } },
+              { $sort: { createdAt: -1 } },
+              {
+                $lookup: {
+                  from: 'userinfos',
+                  localField: 'userId',
+                  foreignField: 'userId',
+                  as: 'userInfo',
+                },
+              },
+              { $unwind: '$userInfo' },
+              {
+                $lookup: {
+                  from: 'groups',
+                  localField: 'groupId',
+                  foreignField: '_id',
+                  as: 'groupInfo',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$groupInfo',
+                  preserveNullAndEmptyArrays: true
+                }
+              },
+              {
+                $project: {
+                  _id: 1,
+                  content: 1,
+                  createdAt: 1,
+                  userId: 1,
+                  groupId: 1,
+                  mediaUrls: 1,
+                  likedBy: 1,
+                  comments: 1,
+                  profilePicture: '$userInfo.profilePicture',
+                  first_name: '$userInfo.first_name',
+                  last_name: '$userInfo.last_name',
+                  editedAt: 1,
+                  groupImage: '$groupInfo.image',
+                  groupname: '$groupInfo.name',
+                },
+              },
+            ]);
+          } else {
+            posts = [];
+          }
+          break;
+        case 'followingUsersPosts':
+          let followingUsers = [];
+          if (mongoose.Types.ObjectId.isValid(userid)) {
+            const userInfo = await UserInfo.findOne({ userId: new mongoose.Types.ObjectId(userid) });
+            if (userInfo) {
+              followingUsers = userInfo.followingUsers || [];
+            }
+          }
+          if (followingUsers.length > 0) {
+            posts = await Post.aggregate([
+              { $match: { userId: { $in: followingUsers }, groupId: null } },
+              { $sort: { createdAt: -1 } },
+              {
+                $lookup: {
+                  from: 'userinfos',
+                  localField: 'userId',
+                  foreignField: 'userId',
+                  as: 'userInfo',
+                },
+              },
+              { $unwind: '$userInfo' },
+              {
+                $project: {
+                  _id: 1,
+                  content: 1,
+                  createdAt: 1,
+                  userId: 1,
+                  groupId: 1,
+                  mediaUrls: 1,
+                  likedBy: 1,
+                  comments: 1,
+                  profilePicture: '$userInfo.profilePicture',
+                  first_name: '$userInfo.first_name',
+                  last_name: '$userInfo.last_name',
+                  editedAt: 1,
+                },
+              },
+            ]);
+          } else {
+            posts = [];
+          }
+          break;
 
       }
     } else {
