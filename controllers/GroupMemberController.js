@@ -18,6 +18,14 @@ export const approveJoinRequest = async (req, res) => {
         if (!group.members.includes(userId)) group.members.push(userId);
         group.memberCount = group.members.length;
         await group.save();
+
+        // Add groupId to user's followingGroups if not already present
+        const userInfo = await UserInfo.findOne({ userId });
+        if (userInfo && !userInfo.followingGroups.includes(group._id)) {
+            userInfo.followingGroups.push(group._id);
+            await userInfo.save();
+        }
+
         res.json({ message: 'User approved and added to group' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -65,6 +73,13 @@ export const joinGroup = async (req, res) => {
         // Update member count
         group.memberCount = group.members.length;
         await group.save();
+
+        // Add groupId to user's followingGroups if not already present
+        const userInfo = await UserInfo.findOne({ userId });
+        if (userInfo && !userInfo.followingGroups.includes(group._id)) {
+            userInfo.followingGroups.push(group._id);
+            await userInfo.save();
+        }
         
         // Return updated group
         const updatedGroup = await Group.findById(groupId)
@@ -105,6 +120,13 @@ export const leaveGroup = async (req, res) => {
         // Update member count
         group.memberCount = group.members.length;
         await group.save();
+
+        // Remove groupId from user's followingGroups if present
+        const userInfo = await UserInfo.findOne({ userId });
+        if (userInfo && userInfo.followingGroups.includes(group._id)) {
+            userInfo.followingGroups = userInfo.followingGroups.filter(gid => gid.toString() !== group._id.toString());
+            await userInfo.save();
+        }
         
         // Return updated group
         const updatedGroup = await Group.findById(groupId)
@@ -326,6 +348,13 @@ export const removeMember = async (req, res) => {
         group.memberCount = group.members.length;
         
         await group.save();
+
+        // Remove groupId from user's followingGroups if present
+        const userInfo = await UserInfo.findOne({ userId: memberToRemove });
+        if (userInfo && userInfo.followingGroups.includes(group._id)) {
+            userInfo.followingGroups = userInfo.followingGroups.filter(gid => gid.toString() !== group._id.toString());
+            await userInfo.save();
+        }
 
         const updatedGroup = await Group.findById(groupId)
             .populate('members', 'name email')

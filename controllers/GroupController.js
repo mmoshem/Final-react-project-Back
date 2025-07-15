@@ -103,6 +103,15 @@ export const createGroup = async (req, res) => {
 
         await newGroup.save();
 
+        // Add groupId to creator's followingGroups if not already present
+        if (userId) {
+            const userInfo = await UserInfo.findOne({ userId });
+            if (userInfo && !userInfo.followingGroups.includes(newGroup._id)) {
+                userInfo.followingGroups.push(newGroup._id);
+                await userInfo.save();
+            }
+        }
+
         // Return populated group
         const populatedGroup = await Group.findById(newGroup._id)
             .populate('creator', 'name')
@@ -192,6 +201,16 @@ export const deleteGroup = async (req, res) => {
         if (userId && group.creator && !group.creator.equals(userId)) {
             return res.status(403).json({ message: 'Only the group creator can delete this group' });
         }
+
+        // Remove groupId from followingGroups for all members and creator
+        const memberIds = group.members.map(id => id.toString());
+        if (group.creator && !memberIds.includes(group.creator.toString())) {
+            memberIds.push(group.creator.toString());
+        }
+        await UserInfo.updateMany(
+            { userId: { $in: memberIds }, followingGroups: group._id },
+            { $pull: { followingGroups: group._id } }
+        );
 
         // DEBUG: Log the group image URL and what we're trying to delete
         console.log('=== DELETE GROUP DEBUG ===');

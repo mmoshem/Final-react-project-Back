@@ -49,14 +49,10 @@ export const getAllPosts = async (req, res) => {
 
             // Build the $or conditions for aggregation
             const orConditions = [
-              { userId: new mongoose.Types.ObjectId(userid) }
+              { userId: new mongoose.Types.ObjectId(userid) }, // your own posts (all)
+              { userId: { $in: followingUsers }, groupId: null }, // posts by users you follow, only if not in a group
+              { groupId: { $in: followingGroups } } // all posts in groups you follow
             ];
-            if (followingUsers.length > 0) {
-              orConditions.push({ userId: { $in: followingUsers } });
-            }
-            if (followingGroups.length > 0) {
-              orConditions.push({ groupId: { $in: followingGroups } });
-            }
 
             posts = await Post.aggregate([
               { $match: { $or: orConditions } },
