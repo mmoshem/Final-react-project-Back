@@ -71,6 +71,20 @@ export const getAllPosts = async (req, res) => {
               },
               { $unwind: '$userInfo' },
               {
+                $lookup: {
+                  from: 'groups',
+                  localField: 'groupId',
+                  foreignField: '_id',
+                  as: 'groupInfo',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$groupInfo',
+                  preserveNullAndEmptyArrays: true
+                }
+              },
+              {
                 $project: {
                   _id: 1,
                   content: 1,
@@ -84,6 +98,8 @@ export const getAllPosts = async (req, res) => {
                   first_name: '$userInfo.first_name',
                   last_name: '$userInfo.last_name',
                   editedAt: 1,
+                  groupImage: '$groupInfo.image',
+                  groupname: '$groupInfo.name',
                 },
               },
             ]);
@@ -138,6 +154,20 @@ export const getAllPosts = async (req, res) => {
           },
           { $unwind: '$userInfo' },
           {
+            $lookup: {
+              from: 'groups',
+              localField: 'groupId',
+              foreignField: '_id',
+              as: 'groupInfo',
+            },
+          },
+          {
+            $unwind: {
+              path: '$groupInfo',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
             $project: {
               _id: 1,
               content: 1,
@@ -151,6 +181,8 @@ export const getAllPosts = async (req, res) => {
               first_name: '$userInfo.first_name',
               last_name: '$userInfo.last_name',
               editedAt: 1,
+              groupImage: '$groupInfo.image',
+              groupname: '$groupInfo.name',
             },
           },
         ]);
