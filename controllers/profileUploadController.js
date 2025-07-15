@@ -1,6 +1,7 @@
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
 import UserInfo from '../models/UserInfo.js'; // ✅ ודאי שזה הנתיב הנכון
+import Group from '../models/Group.js'; // group
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -10,22 +11,26 @@ const upload = multer({
 const uploadProfilePicture = async (req, res) => {
   try {
     const userId = req.body.userId;
+    const groupId = req.body.groupId; // group
 
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image provided' });
     }
 
-    if (!userId) {
-      return res.status(400).json({ success: false, message: 'Missing userId' });
+    if (!userId && !groupId) { // group
+      return res.status(400).json({ success: false, message: 'Missing userId or groupId' });
     }
 
-    console.log(`Uploading profile picture for user ${userId}...`);
+    const isGroupUpload = !!groupId; // group
+    const uploadTarget = isGroupUpload ? groupId : userId; // group
+
+    console.log(`Uploading ${isGroupUpload ? 'group' : 'profile'} picture for ${isGroupUpload ? 'group' : 'user'} ${uploadTarget}...`); // group
 
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: 'profile_pictures',
-          public_id: userId,
+          folder: isGroupUpload ? 'group_pictures' : 'profile_pictures', // group
+          public_id: isGroupUpload ? `group_${groupId}` : userId, // group
           overwrite: true,
           resource_type: 'image'
         },
@@ -42,12 +47,22 @@ const uploadProfilePicture = async (req, res) => {
       stream.end(req.file.buffer);
     });
 
-    // ✅ עדכון כתובת התמונה במסד הנתונים
-    await UserInfo.findOneAndUpdate(
-      { userId }, // מחפש לפי userId
-      { profilePicture: result.secure_url }, // מעדכן כתובת תמונה
-      { new: true } // מחזיר את המסמך המעודכן (לא חובה)
-    );
+    // group - conditional database update
+    if (isGroupUpload) {
+      // group - update group image
+      await Group.findByIdAndUpdate(
+        groupId,
+        { image: result.secure_url },
+        { new: true }
+      );
+    } else {
+      // ✅ עדכון כתובת התמונה במסד הנתונים - original profile logic
+      await UserInfo.findOneAndUpdate(
+        { userId }, // מחפש לפי userId
+        { profilePicture: result.secure_url }, // מעדכן כתובת תמונה
+        { new: true } // מחזיר את המסמך המעודכן (לא חובה)
+      );
+    }
 
     return res.status(200).json({
       success: true,
@@ -55,7 +70,7 @@ const uploadProfilePicture = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error('Error uploading picture:', error); // group
     return res.status(500).json({
       success: false,
       message: 'Upload failed'
