@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import Message from '../models/Message.js';
 
 let io; // נגדיר את המשתנה כך שנוכל להשתמש בו מחוץ לפונקציה
 
@@ -14,8 +15,15 @@ export const initSocket = (server) => {
     console.log('🟢 משתמש התחבר עם socket id:', socket.id);
 
     // דוגמה לאירוע
-    socket.on('sendMessage', (data) => {
+    socket.on('sendMessage', async (data) => {
       console.log('📩 התקבלה הודעה:', data);
+      // שמור את ההודעה במונגו
+      try {
+        const message = new Message(data);
+        await message.save();
+      } catch (err) {
+        console.error('שגיאה בשמירת הודעה:', err);
+      }
       // נשלח את ההודעה לכל המשתמשים
       io.emit('receiveMessage', data);
     });

@@ -14,6 +14,7 @@ import profileUploadRoutes from './routes/profileUploadRoute.js';
 import groupRoutes from './routes/groupRoutes.js';
 import filterOptionsRoutes from './routes/filterOptionsRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 import { initSocket } from './config/socketConfig.js';
 import http from 'http';
 
@@ -45,6 +46,7 @@ app.use('/api/userinfo', userInfoRoutes);
  app.use('/api', profileUploadRoutes);
 app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api/quiz', quizRoutes);//
+app.use('/api/messages', messageRoutes); // <<<<<<<<<<< הוספנו את זה
 
 console.log('All routes mounted successfully');
 
