@@ -203,6 +203,44 @@ export const getAllPosts = async (req, res) => {
             posts = [];
           }
           break;
+          default:
+            // In this case, fillter is the userId whose posts you want
+            let userPosts = [];
+            if (mongoose.Types.ObjectId.isValid(fillter)) {
+              userPosts = await Post.aggregate([
+                { $match: { userId: new mongoose.Types.ObjectId(fillter), groupId: null } },
+                { $sort: { createdAt: -1 } },
+                {
+                  $lookup: {
+                    from: 'userinfos',
+                    localField: 'userId',
+                    foreignField: 'userId',
+                    as: 'userInfo',
+                  },
+                },
+                { $unwind: '$userInfo' },
+                {
+                  $project: {
+                    _id: 1,
+                    content: 1,
+                    createdAt: 1,
+                    userId: 1,
+                    groupId: 1,
+                    mediaUrls: 1,
+                    likedBy: 1,
+                    comments: 1,
+                    profilePicture: '$userInfo.profilePicture',
+                    first_name: '$userInfo.first_name',
+                    last_name: '$userInfo.last_name',
+                    editedAt: 1,
+                  },
+                },
+              ]);
+            } else {
+              userPosts = [];
+            }
+            posts = userPosts;
+            break;
 
       }
     } else {
