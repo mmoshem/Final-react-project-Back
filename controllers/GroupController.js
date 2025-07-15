@@ -2,6 +2,7 @@ import Group from '../models/Group.js';
 import UserInfo from '../models/UserInfo.js';
 import mongoose from 'mongoose'; // ✅ Added this import
 import cloudinary from '../config/cloudinary.js'; // Add this import for Cloudinary cleanup
+import Post from '../models/PostModel.js'; // Add this import for post deletion
 
 console.log('🚨🚨🚨 GROUP CONTROLLER LOADED WITH DEBUG VERSION! 🚨🚨🚨'); // ADD THIS LINE
 
@@ -166,91 +167,51 @@ export const updateGroup = async (req, res) => {
     }
 };
 
-// Replace your deleteGroup function with this debug version temporarily
+// DELETE group (with Cloudinary cleanup)
 export const deleteGroup = async (req, res) => {
-     console.log('🚨🚨🚨 DELETE GROUP FUNCTION ACTUALLY CALLED! 🚨🚨🚨');
-    console.log('🚨🚨🚨 THIS IS THE DEBUG VERSION! 🚨🚨🚨');
-    
-    
     try {
         const groupId = req.params.id;
-        console.log('🚨 Group ID received:', groupId); // ADD THIS TOO
-
-        
-        if (!mongoose.Types.ObjectId.isValid(groupId)) {
-            return res.status(400).json({ message: 'Invalid group ID format' });
-        }
-
         const { userId } = req.body;
-
         const group = await Group.findById(groupId);
         if (!group) {
             return res.status(404).json({ message: 'Group not found' });
         }
-
         // Check if user is the creator
         if (userId && group.creator && !group.creator.equals(userId)) {
             return res.status(403).json({ message: 'Only the group creator can delete this group' });
         }
-
-        // DEBUG: Log the group image URL and what we're trying to delete
-        console.log('=== DELETE GROUP DEBUG ===');
-        console.log('Group ID:', groupId);
-        console.log('Group image URL:', group.image);
-        
+        // Delete group image from Cloudinary first
         if (group.image) {
-            // Try to extract public_id from the URL
             const imageUrl = group.image;
-            console.log('Full image URL:', imageUrl);
-            
-            // Cloudinary URLs typically look like:
-            // https://res.cloudinary.com/your_cloud/image/upload/v1234567/folder/filename.jpg
-            // The public_id is: folder/filename (without extension)
-            
             let publicId;
             if (imageUrl.includes('cloudinary.com')) {
                 const urlParts = imageUrl.split('/');
                 const uploadIndex = urlParts.findIndex(part => part === 'upload');
                 if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
-                    // Skip version number if present (starts with 'v')
                     const startIndex = urlParts[uploadIndex + 1].startsWith('v') ? uploadIndex + 2 : uploadIndex + 1;
                     const pathParts = urlParts.slice(startIndex);
-                    // Remove file extension from last part
                     const lastPart = pathParts[pathParts.length - 1];
                     pathParts[pathParts.length - 1] = lastPart.split('.')[0];
                     publicId = pathParts.join('/');
                 }
             }
-            
-            console.log('Extracted public_id:', publicId);
-            console.log('Fallback public_id:', `group_pictures/group_${groupId}`);
-            
+            // Fallback public_id
+            const expectedPublicId = `group_pictures/group_${groupId}`;
             try {
-                // Try the extracted public_id first
                 if (publicId) {
-                    console.log(`Attempting to delete with extracted public_id: ${publicId}`);
-                    const result1 = await cloudinary.uploader.destroy(publicId);
-                    console.log('Delete result with extracted public_id:', result1);
+                    await cloudinary.uploader.destroy(publicId);
                 }
-                
-                // Also try the expected format
-                const expectedPublicId = `group_pictures/group_${groupId}`;
-                console.log(`Attempting to delete with expected public_id: ${expectedPublicId}`);
-                const result2 = await cloudinary.uploader.destroy(expectedPublicId);
-                console.log('Delete result with expected public_id:', result2);
-                
+                await cloudinary.uploader.destroy(expectedPublicId);
             } catch (cloudinaryError) {
                 console.error('Cloudinary deletion error:', cloudinaryError);
             }
         }
-
-        // Delete the group from database
+        // Delete all posts belonging to this group
+        await Post.deleteMany({ groupId });
+        // Now delete the group from MongoDB
         await Group.findByIdAndDelete(groupId);
-        
-        console.log('=== END DELETE GROUP DEBUG ===');
-        res.json({ message: 'Group deleted - check console for debug info' });
+        res.json({ message: 'Group and its posts deleted successfully' });
     } catch (error) {
-        console.error('Error deleting group:', error);
         res.status(500).json({ message: error.message });
     }
 };

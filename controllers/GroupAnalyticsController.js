@@ -24,11 +24,23 @@ export const getGroupAnalytics = async (req, res) => {
         console.log(`✅ Group found: ${group.name}`);
 
         // Calculate date range
-        const endDate = new Date();
-        const startDate = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
         startDate.setDate(startDate.getDate() - parseInt(timeRange));
 
         console.log(`📅 Date range: ${startDate} to ${endDate}`);
+
+        // Parse month range from query
+        let { startMonth, endMonth } = req.query;
+        let customMonthRange = false;
+        if (startMonth && endMonth) {
+            customMonthRange = true;
+            // Set startDate and endDate to cover the full months
+            startDate = new Date(startMonth + '-01T00:00:00Z');
+            // End date: last day of endMonth
+            const [endY, endM] = endMonth.split('-').map(Number);
+            endDate = new Date(endY, endM, 0, 23, 59, 59, 999); // last ms of month
+        }
 
         // 1. Posts Analytics - Using your exact schema
         const posts = await Post.find({
@@ -60,6 +72,85 @@ export const getGroupAnalytics = async (req, res) => {
                 count: postsByDay[dayStr] || 0,
                 formattedDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
             });
+        }
+
+        // Only include months with posts for the group
+        // Group posts by month and aggregate likes
+        const postsByMonth = {};
+        const likesByMonth = {};
+        posts.forEach(post => {
+            const month = new Date(post.createdAt).toISOString().slice(0, 7); // YYYY-MM
+            postsByMonth[month] = (postsByMonth[month] || 0) + 1;
+            likesByMonth[month] = (likesByMonth[month] || 0) + (post.likedBy?.length || 0);
+        });
+        // Only months with posts
+        const monthsWithPosts = Object.keys(postsByMonth).sort();
+        const postsTimelineMonthly = monthsWithPosts.map(monthStr => ({
+            month: monthStr,
+            count: postsByMonth[monthStr] || 0,
+            likes: likesByMonth[monthStr] || 0,
+            formattedMonth: new Date(monthStr + '-01').toLocaleString('en-US', { month: 'short', year: 'numeric' })
+        }));
+
+        // Simulate new members per month (since join dates are not tracked)
+        const memberGrowthByMonth = [];
+        let prevMembers = null;
+        monthsWithPosts.forEach(monthStr => {
+            // Find the last day in memberGrowth for this month
+            const lastDay = memberGrowth.filter(mg => mg.date.startsWith(monthStr)).slice(-1)[0];
+            if (lastDay) {
+                const newMembers = prevMembers === null ? lastDay.members : lastDay.members - prevMembers;
+                memberGrowthByMonth.push({
+                    month: monthStr,
+                    newMembers: newMembers < 0 ? 0 : newMembers,
+                    formattedMonth: new Date(monthStr + '-01').toLocaleString('en-US', { month: 'short', year: 'numeric' })
+                });
+                prevMembers = lastDay.members;
+            } else {
+                memberGrowthByMonth.push({
+                    month: monthStr,
+                    newMembers: 0,
+                    formattedMonth: new Date(monthStr + '-01').toLocaleString('en-US', { month: 'short', year: 'numeric' })
+                });
+            }
+        });
+
+        // Top 5 contributors (by post count) in selected range
+        const userPostCounts = {};
+        const userIdToName = {};
+        for (const post of posts) {
+            const uid = post.userId?.toString?.() || post.userId;
+            userPostCounts[uid] = (userPostCounts[uid] || 0) + 1;
+            if (post.userId && typeof post.userId === 'object') {
+                userIdToName[uid] = post.userId.displayName || post.userId.name || post.userId.email || 'Unknown';
+            }
+        }
+        const sortedContrib = Object.entries(userPostCounts).sort((a, b) => b[1] - a[1]);
+        const topContrib = sortedContrib.slice(0, 5).map(([userId, count]) => ({
+            userId,
+            displayName: userIdToName[userId] || 'Unknown',
+            postCount: count
+        }));
+        const otherContribCount = sortedContrib.slice(5).reduce((sum, [, count]) => sum + count, 0);
+        if (otherContribCount > 0) {
+            topContrib.push({ userId: 'other', displayName: 'Other', postCount: otherContribCount });
+        }
+
+        // Top 5 most liked users (by total likes received on their posts)
+        const userLikeCounts = {};
+        for (const post of posts) {
+            const uid = post.userId?.toString?.() || post.userId;
+            userLikeCounts[uid] = (userLikeCounts[uid] || 0) + (post.likedBy?.length || 0);
+        }
+        const sortedLiked = Object.entries(userLikeCounts).sort((a, b) => b[1] - a[1]);
+        const topLiked = sortedLiked.slice(0, 5).map(([userId, count]) => ({
+            userId,
+            displayName: userIdToName[userId] || 'Unknown',
+            likeCount: count
+        }));
+        const otherLikedCount = sortedLiked.slice(5).reduce((sum, [, count]) => sum + count, 0);
+        if (otherLikedCount > 0) {
+            topLiked.push({ userId: 'other', displayName: 'Other', likeCount: otherLikedCount });
         }
 
         // 2. Member Growth Simulation (since you don't track join dates)
@@ -153,12 +244,17 @@ export const getGroupAnalytics = async (req, res) => {
                 mediaUsageRate: parseFloat(mediaUsageRate),
                 editedPosts,
                 postsTimeline,
+                postsTimelineMonthly, // legacy, not used
+                postsTimelineMonthlyFiltered: postsTimelineMonthly, // only months with posts
                 hourlyActivity,
-                weeklyActivity
+                weeklyActivity,
+                topContributors: topContrib,
+                topLikedUsers: topLiked
             },
             memberAnalytics: {
                 totalMembers,
                 memberGrowth,
+                memberGrowthByMonth, // only months with posts
                 currentPendingRequests: group.pendingRequests?.length || 0
             },
             summary: {
