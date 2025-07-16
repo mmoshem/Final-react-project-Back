@@ -17,6 +17,7 @@ import quizRoutes from './routes/quizRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import { initSocket } from './config/socketConfig.js';
 import http from 'http';
+import commentRoutes from './routes/commentRoutes.js';
 
 const app = express();
 
@@ -47,6 +48,7 @@ console.log('Group routes mounted at /api/groups');
 app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api/quiz', quizRoutes);//
 app.use('/api/messages', messageRoutes); // <<<<<<<<<<< הוספנו את זה
+app.use(commentRoutes);
 
 console.log('All routes mounted successfully');
 
