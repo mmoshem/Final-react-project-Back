@@ -1,5 +1,6 @@
 import Message from '../models/Message.js';
 import UserInfo from '../models/UserInfo.js';
+import mongoose from 'mongoose';
 
 // Get all messages between two users
 export const getMessagesBetweenUsers = async (req, res) => {
@@ -38,5 +39,44 @@ export const getConversations = async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+};
+
+// Get unread message counts for a user
+export const getUnreadCounts = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const counts = await Message.aggregate([
+      { $match: { to: userObjectId, isRead: false } },
+      { $group: { _id: '$from', count: { $sum: 1 } } }
+    ]);
+    console.log('[BACKEND] Raw counts:', counts);
+    const result = {};
+    counts.forEach(c => {
+      result[String(c._id)] = c.count;
+      console.log(`[BACKEND] Adding unread for userId=${String(c._id)} (type: ${typeof String(c._id)}): count=${c.count}`);
+    });
+    console.log('[BACKEND] Unread counts for', userId, ':', result);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch unread counts' });
+  }
+};
+
+// Mark messages as read between two users
+export const markAsRead = async (req, res) => {
+  const { from, to } = req.body;
+  try {
+    const fromObjectId = new mongoose.Types.ObjectId(from);
+    const toObjectId = new mongoose.Types.ObjectId(to);
+    const updateResult = await Message.updateMany(
+      { from: fromObjectId, to: toObjectId, isRead: false },
+      { $set: { isRead: true } }
+    );
+    console.log('[BACKEND] Marked as read from', from, 'to', to, 'result:', updateResult);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 }; 
