@@ -14,6 +14,7 @@ import profileUploadRoutes from './routes/profileUploadRoute.js';
 import groupRoutes from './routes/groupRoutes.js';
 import filterOptionsRoutes from './routes/filterOptionsRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';//
+import commentRoutes from './routes/commentRoutes.js';
 
 const app = express();
 
@@ -39,6 +40,7 @@ console.log('Group routes mounted at /api/groups');
  app.use('/api', profileUploadRoutes);
 app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api/quiz', quizRoutes);//
+app.use(commentRoutes);
 
 console.log('All routes mounted successfully');
 
