@@ -17,6 +17,7 @@ export const getMessagesBetweenUsers = async (req, res) => {
 // Post a new message
 export const createMessage = async (req, res) => {
   const { from, to, text, time } = req.body;
+  console.log('[BACKEND] createMessage called:', { from, to, text, time });
   const message = new Message({ from, to, text, time });
   await message.save();
   res.json(message);
@@ -45,6 +46,7 @@ export const getConversations = async (req, res) => {
 // Get unread message counts for a user
 export const getUnreadCounts = async (req, res) => {
   const { userId } = req.params;
+  console.log('[BACKEND] getUnreadCounts called for userId:', userId);
   try {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const counts = await Message.aggregate([
@@ -60,6 +62,7 @@ export const getUnreadCounts = async (req, res) => {
     console.log('[BACKEND] Unread counts for', userId, ':', result);
     res.json(result);
   } catch (err) {
+    console.error('[BACKEND] Error in getUnreadCounts:', err);
     res.status(500).json({ error: 'Failed to fetch unread counts' });
   }
 };
@@ -67,6 +70,7 @@ export const getUnreadCounts = async (req, res) => {
 // Mark messages as read between two users
 export const markAsRead = async (req, res) => {
   const { from, to } = req.body;
+  console.log('[BACKEND] markAsRead called:', { from, to });
   try {
     const fromObjectId = new mongoose.Types.ObjectId(from);
     const toObjectId = new mongoose.Types.ObjectId(to);
@@ -77,6 +81,7 @@ export const markAsRead = async (req, res) => {
     console.log('[BACKEND] Marked as read from', from, 'to', to, 'result:', updateResult);
     res.json({ success: true });
   } catch (err) {
+    console.error('[BACKEND] Error in markAsRead:', err);
     res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 }; 
