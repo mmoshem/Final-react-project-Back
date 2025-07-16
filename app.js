@@ -13,9 +13,16 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import profileUploadRoutes from './routes/profileUploadRoute.js';
 import groupRoutes from './routes/groupRoutes.js';
 import filterOptionsRoutes from './routes/filterOptionsRoutes.js';
-import quizRoutes from './routes/quizRoutes.js';//
+import quizRoutes from './routes/quizRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
+import { initSocket } from './config/socketConfig.js';
+import http from 'http';
 
 const app = express();
+
+const server = http.createServer(app); // ניצור שרת HTTP
+initSocket(server); // אתחול socket
+
 
 // Middlewares
 app.use(cors());
@@ -39,11 +46,12 @@ console.log('Group routes mounted at /api/groups');
  app.use('/api', profileUploadRoutes);
 app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
 app.use('/api/quiz', quizRoutes);//
+app.use('/api/messages', messageRoutes); // <<<<<<<<<<< הוספנו את זה
 
 console.log('All routes mounted successfully');
 
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
