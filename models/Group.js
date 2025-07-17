@@ -38,7 +38,7 @@ createdAt: {
     default: Date.now
 },
 pendingRequests: [{
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Change from 'UserInfo' to 'User'
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
     requestedAt: { type: Date, default: Date.now }
 }],
 });

@@ -36,8 +36,7 @@
     "Kiryat Motzkin",
     "Kiryat Yam",
     "Karmiel",
-    "Yokneam Illit",
-    "TEST"
+    "Yokneam Illit"
   ],
   "Company": [
     "Intel",
@@ -103,7 +102,8 @@
     "Plarium",
     "AnyVision",
     "K Health",
-    "TEST"
+    "TEST",
+    "meta"
   ],
   "University": [
     "Tel Aviv University",
@@ -129,8 +129,7 @@
     "Ono Academic College",
     "Holon Institute of Technology (HIT)",
     "WIZO Haifa Academy of Design and Education",
-    "Tel-Hai Academic College",
-    "Test"
+    "Tel-Hai Academic College"
   ],
   "experienceLevel": [
     "Entry Level",

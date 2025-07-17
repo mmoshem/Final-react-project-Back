@@ -1,7 +1,6 @@
 import UserInfo from "../models/UserInfo.js";
 
 export const updateUserInfo = async (req, res) => {
-  //const { userId, updates } = req.body;
   const userId = req.params.userId || req.body.userId;
   const updates = req.body.updates || req.body; 
 
@@ -22,7 +21,6 @@ export const followUser = async (req, res) => {
   try {
     const { followerId, followedId } = req.body;
 
-    // ודא ששני המשתמשים קיימים
     const currentUser = await UserInfo.findOne({ userId: followerId  });
     const viewedUser = await UserInfo.findOne({ userId: followedId  });
 
@@ -30,7 +28,6 @@ export const followUser = async (req, res) => {
       return res.status(404).json({ error: "One of the users not found" });
     }
 
-    // אם כבר עוקב – אל תוסיף שוב
     if (!viewedUser.followers.includes(followerId)) {
       viewedUser.followers.push(followerId);
     }
@@ -61,10 +58,10 @@ export const unfollowUser = async (req, res) => {
       return res.status(404).json({ error: "One of the users not found" });
     }
 
-    // הסרה של followerId ממערך העוקבים של המשתמש הנצפה
+    // הסרה ממערך העוקבים של המשתמש 
     viewedUser.followers = viewedUser.followers.filter(id => id.toString() !== followerId);
 
-    // הסרה של followedId ממערך הנעקבים של המשתמש העוקב
+    // הסרה ממערך הנעקבים של המשתמש העוקב
     currentUser.followingUsers = currentUser.followingUsers.filter(id => id.toString() !== followedId);
 
     await viewedUser.save();
@@ -119,17 +116,14 @@ export const searchUsers = async (req, res) => {
       ];
     }
 
-    // סינון לפי עיר בתוך location.city
     if (City) {
       query['location.city'] = City;
     }
 
-    // סינון לפי חברה מתוך experience (מערך של אובייקטים)
     if (Company) {
       query['experience.company'] = Company;
     }
 
-    // סינון לפי אוניברסיטה מתוך education
     if (University) {
       query['education.university'] = University;
     }

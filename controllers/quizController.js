@@ -3,7 +3,7 @@ import Question from '../models/Question.js';
 import AnswerHistory from '../models/AnswerHistory.js';
 import DailyQuestionAssignment from '../models/DailyQuestionAssignment.js';
 
-// שליפת שאלה יומית
+
 export const getDailyQuestion = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -26,10 +26,9 @@ export const getDailyQuestion = async (req, res) => {
       return res.json(question);
     }
 
-    // מחיקה של כל שאלה יומית ישנה של המשתמש
     await DailyQuestionAssignment.deleteMany({ userId });
 
-    // מציאת שאלות שהמשתמש ענה עליהן נכון בעבר
+
     const answeredCorrectly = await AnswerHistory.find({
       userId,
       isCorrect: true
@@ -63,7 +62,7 @@ export const getDailyQuestion = async (req, res) => {
   }
 };
 
-// שליחת תשובה
+
 export const submitAnswer = async (req, res) => {
   try {
     const { userId, questionId, selectedAnswerIndex } = req.body;
@@ -97,12 +96,12 @@ export const submitAnswer = async (req, res) => {
       correctAnswerIndex: question.correctAnswerIndex
     });
   } catch (error) {
-    console.error('❌ Failed to save answer:', error);
+    console.error('Failed to save answer:', error);
     res.status(500).json({ error: 'Failed to save answer' });
   }
 };
 
-// סטטוס תשובה לשאלה יומית
+
 export const getAnswerStatus = async (req, res) => {
   try {
     const { userId, questionId } = req.params;
@@ -119,7 +118,7 @@ export const getAnswerStatus = async (req, res) => {
       selectedAnswerIndex: existing.selectedAnswerIndex
     });
   } catch (error) {
-    console.error('❌ Error in getAnswerStatus:', error);
+    console.error('Error in getAnswerStatus:', error);
     res.status(500).json({ error: 'Error checking answer status' });
   }
 };

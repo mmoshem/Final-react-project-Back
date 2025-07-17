@@ -8,6 +8,6 @@ router.post(
   profileUploadController.profileUploadMiddleware,
   profileUploadController.uploadProfilePicture
 );
-console.log("Upload route hit");
+
 
 export default router;

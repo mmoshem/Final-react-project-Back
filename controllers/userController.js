@@ -81,10 +81,8 @@ const getFriendsInfo = async (req, res) => {
       return res.status(400).json({ message: "No friend IDs provided" });
     }
 
-    // Fetch all friends in a single query using $in
     const friends = await UserInfo.find({ userId: { $in: ids } });
 
-    // Map to desired format
     const result = friends.map(friend => ({
       userId: friend.userId,
       profilePicture: friend.profilePicture,
@@ -99,5 +97,5 @@ const getFriendsInfo = async (req, res) => {
 };
 
 
-// module.exports = { handleUserCommand };
+
 export default { handleUserCommand, getUserInfo, getFriendsInfo };

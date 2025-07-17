@@ -5,7 +5,6 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import bodyParser from 'body-parser';
-import companyRoutes from './routes/companyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userInfoRoutes from './routes/userInfoRoutes.js';
 import postRoutes from './routes/postRoutes.js';
@@ -35,19 +34,16 @@ connectDB();
 
 // Routes
 app.use('/api/groups', groupRoutes);
-// Uncomment other routes as needed:
  app.use(userRoutes);
-// app.use(companyRoutes);
  app.use(authRoutes);
  app.use('/api/userinfo', userInfoRoutes);
  app.use(postRoutes);
  app.use(uploadRoutes);
  app.use('/api', profileUploadRoutes);
-app.use('/api/filter-options', filterOptionsRoutes);//חדש למען שימוש בקובץ ג'ייסון 
-app.use('/api/quiz', quizRoutes);//
-app.use('/api/messages', messageRoutes); // <<<<<<<<<<< הוספנו את זה
+app.use('/api/filter-options', filterOptionsRoutes);// למען שימוש בקובץ ג'ייסון 
+app.use('/api/quiz', quizRoutes);
+app.use('/api/messages', messageRoutes); 
 app.use(commentRoutes);
-
 
 
 const port = process.env.PORT || 5000;

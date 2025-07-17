@@ -15,7 +15,6 @@ const userInfoSchema = new mongoose.Schema({
     country: { type: String, default: '' },
   },
   about: { type: String, default: '' },
-  //isPrivate: { type: Boolean, default: false },
   education: [
     {
       university: { type: String, default: '' },
@@ -35,7 +34,7 @@ const userInfoSchema = new mongoose.Schema({
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   followingGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }]
 }, {
-  timestamps: true // adds createdAt and updatedAt automatically
+  timestamps: true 
 });
 userInfoSchema.index({ userId: 1 });
 const UserInfo = mongoose.model('UserInfo', userInfoSchema);

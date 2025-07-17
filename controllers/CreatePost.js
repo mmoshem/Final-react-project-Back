@@ -31,7 +31,6 @@ export const getAllPosts = async (req, res) => {
   try {
 
     const {groupid, userid, fillter}=req.params;
-    // Aggregate posts with user info
     let posts = [];
     if(groupid==='none'){
       switch(fillter){
@@ -332,7 +331,6 @@ export const updatePost = async (req, res) => {
       }
     }
 
-    // Update the post
     const updatedPost = await Post.findByIdAndUpdate(
       postId,
       {
@@ -340,7 +338,7 @@ export const updatePost = async (req, res) => {
         mediaUrls: mediaUrls || [],
         editedAt: new Date()
       },
-      { new: true } //return the updated and not the one before the update
+      { new: true } 
     );
 
     res.status(200).json(updatedPost);
@@ -375,15 +373,12 @@ function extractPublicId(url) {
 }
 
 function getResourceType(url) {
-  if (!url) return 'image'; // default fallback
+  if (!url) return 'image'; 
   const videoExtensions = ['.mp4', '.webm', '.ogg'];
   return videoExtensions.some(ext => url.toLowerCase().endsWith(ext)) ? 'video' : 'image';
 }
 
 export const deletePost = async (req, res) => {
-  console.log('DELETE /api/posts/:id called');
-  console.log('req.params:', req.params);
-  console.log('req.body:', req.body);
 
   try {
     const { id } = req.params;
@@ -396,7 +391,6 @@ export const deletePost = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
     let canDelete = false;
-    // Check if the user is the post creator
     if (post.userId.toString() === userId) {
       canDelete = true;
     }
@@ -412,13 +406,13 @@ export const deletePost = async (req, res) => {
     }
     if (Array.isArray(mediaUrls)) {
       for (const url of mediaUrls) {
-        console.log("Attempting to delete media URL:", url);
+
         const publicId = extractPublicId(url);
         const resourceType = getResourceType(url);
-        console.log("Extracted publicId:", publicId, "Resource type:", resourceType);
+        
         try {
           const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
-          console.log("Cloudinary destroy result:", result);
+         
         } catch (err) {
           console.error('Failed to delete media from Cloudinary:', err);
         }
@@ -451,7 +445,7 @@ export const likeDislike = async (req, res) => {
         { $pull: { likedBy: userId } }
       );
       const updated = await Post.findById(postID);
-      res.status(200).json({ liked: false, likeCount: updated.likedBy.length });//
+      res.status(200).json({ liked: false, likeCount: updated.likedBy.length });
     } else {
       await Post.updateOne(
         { _id: postID },
@@ -580,6 +574,43 @@ export const getUserPosts = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user posts:", error);
     res.status(500).json({ message: "Failed to fetch user posts" });
+  }
+};
+
+// Get likers for a post
+export const getPostLikers = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(postId)) return res.status(400).json({ message: 'Invalid postId' });
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    // Defensive: if no likes, return empty array
+    if (!post.likedBy || post.likedBy.length === 0) {
+      return res.json([]);
+    }
+    // Only use valid ObjectIds
+    const likerIds = post.likedBy
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
+    if (likerIds.length === 0) return res.json([]);
+
+    // Aggregation: lookup UserInfo by userId in likedBy array
+    const users = await UserInfo.aggregate([
+      { $match: { userId: { $in: likerIds } } },
+      {
+        $project: {
+          _id: 0, // do not return _id
+          userId: 1,
+          first_name: 1,
+          last_name: 1,
+          profilePicture: 1
+        }
+      }
+    ]);
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch likers' });
   }
 };
 

@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 export const getGroupAnalytics = async (req, res) => {
     try {
         const { groupId } = req.params;
-        const { timeRange = '7' } = req.query;
+        let { timeRange = '7', startDate, endDate } = req.query;
         
         
         if (!mongoose.Types.ObjectId.isValid(groupId)) {
@@ -20,16 +20,30 @@ export const getGroupAnalytics = async (req, res) => {
 
 
         // Calculate date range
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - parseInt(timeRange));
+        let dateFilter = {};
+        let analyticsStartDate, analyticsEndDate;
+        if (startDate && endDate) {
+            analyticsStartDate = new Date(startDate);
+            analyticsEndDate = new Date(endDate);
+            dateFilter = { createdAt: { $gte: analyticsStartDate, $lte: analyticsEndDate } };
+        } else if (timeRange === 'all') {
+            analyticsStartDate = null;
+            analyticsEndDate = null;
+            dateFilter = {}; // No date filter
+        } else {
+            analyticsEndDate = new Date();
+            analyticsStartDate = new Date();
+            analyticsStartDate.setDate(analyticsStartDate.getDate() - parseInt(timeRange));
+            dateFilter = { createdAt: { $gte: analyticsStartDate, $lte: analyticsEndDate } };
+        }
 
 
         // 1. Posts Analytics - Using your exact schema
-        const posts = await Post.find({
+        const postQuery = {
             groupId: new mongoose.Types.ObjectId(groupId),
-            createdAt: { $gte: startDate, $lte: endDate }
-        }).sort({ createdAt: 1 });
+            ...dateFilter
+        };
+        const posts = await Post.find(postQuery).sort({ createdAt: 1 });
 
 
         // Calculate engagement metrics
@@ -47,28 +61,56 @@ export const getGroupAnalytics = async (req, res) => {
 
         // Fill missing days with 0 for complete timeline
         const postsTimeline = [];
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            const dayStr = d.toISOString().split('T')[0];
-            postsTimeline.push({
-                date: dayStr,
-                count: postsByDay[dayStr] || 0,
-                formattedDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            });
+        if (analyticsStartDate && analyticsEndDate) {
+            for (let d = new Date(analyticsStartDate); d <= analyticsEndDate; d.setDate(d.getDate() + 1)) {
+                const dayStr = d.toISOString().split('T')[0];
+                postsTimeline.push({
+                    date: dayStr,
+                    count: postsByDay[dayStr] || 0,
+                    formattedDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                });
+            }
+        } else if (posts.length > 0) {
+            // For 'all' time, fill from first post to last post
+            const firstDate = new Date(posts[0].createdAt);
+            const lastDate = new Date(posts[posts.length - 1].createdAt);
+            for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+                const dayStr = d.toISOString().split('T')[0];
+                postsTimeline.push({
+                    date: dayStr,
+                    count: postsByDay[dayStr] || 0,
+                    formattedDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                });
+            }
         }
 
         // 2. Member Growth Simulation (since you don't track join dates)
         const memberGrowth = [];
         const totalMembers = group.memberCount || 0;
-        const daysInRange = parseInt(timeRange);
-        
-        // Simulate gradual member growth
+        let daysInRange = 0;
+        if (analyticsStartDate && analyticsEndDate) {
+            daysInRange = Math.round((analyticsEndDate - analyticsStartDate) / (1000 * 60 * 60 * 24));
+        } else if (posts.length > 0) {
+            const firstDate = new Date(posts[0].createdAt);
+            const lastDate = new Date(posts[posts.length - 1].createdAt);
+            daysInRange = Math.round((lastDate - firstDate) / (1000 * 60 * 60 * 24));
+        } else {
+            daysInRange = parseInt(timeRange);
+        }
         for (let i = 0; i <= daysInRange; i++) {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + i);
+            let date;
+            if (analyticsStartDate) {
+                date = new Date(analyticsStartDate);
+                date.setDate(date.getDate() + i);
+            } else if (posts.length > 0) {
+                date = new Date(posts[0].createdAt);
+                date.setDate(date.getDate() + i);
+            } else {
+                date = new Date();
+            }
             const dayStr = date.toISOString().split('T')[0];
-            
             // Simulate realistic growth curve
-            const growthProgress = i / daysInRange;
+            const growthProgress = daysInRange > 0 ? i / daysInRange : 1;
             const memberCount = Math.floor(totalMembers * (0.3 + 0.7 * growthProgress));
             memberGrowth.push({
                 date: dayStr,
@@ -106,7 +148,7 @@ export const getGroupAnalytics = async (req, res) => {
 
         // 5. Calculate averages
         const totalPosts = posts.length;
-        const avgPostsPerDay = (totalPosts / parseInt(timeRange)).toFixed(1);
+        const avgPostsPerDay = daysInRange > 0 ? (totalPosts / daysInRange).toFixed(1) : 0;
         const avgPostsPerWeek = (avgPostsPerDay * 7).toFixed(1);
         const avgLikesPerPost = totalPosts > 0 ? (totalLikes / totalPosts).toFixed(1) : 0;
         const avgCommentsPerPost = totalPosts > 0 ? (totalComments / totalPosts).toFixed(1) : 0;
@@ -130,10 +172,12 @@ export const getGroupAnalytics = async (req, res) => {
                 createdAt: group.createdAt
             },
             timeRange: {
-                days: parseInt(timeRange),
-                startDate,
-                endDate,
-                label: `Last ${timeRange} days`
+                days: daysInRange,
+                startDate: analyticsStartDate,
+                endDate: analyticsEndDate,
+                label: (startDate && endDate)
+                    ? `Custom: ${startDate} to ${endDate}`
+                    : (timeRange === 'all' ? 'All Time' : `Last ${timeRange} days`)
             },
             postsAnalytics: {
                 totalPosts,
