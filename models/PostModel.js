@@ -17,11 +17,11 @@ const PostModel = new mongoose.Schema({
   }],
   editedAt: { type:Date, default:null}, // flag to indicate if the post has been edited
 }, {
-  timestamps: true // adds createdAt and updatedAt automatically
+  timestamps: true 
 });
 
 // Indexes for optimal query performance
-PostModel.index({ userId: 1, createdAt: -1 }); // For user posts with date filtering (also covers simple userId queries)
+PostModel.index({ userId: 1, createdAt: -1 }); // For user posts with date filtering 
 PostModel.index({ userId: 1, mediaUrls: 1 }); // For content filtering (media posts)
 PostModel.index({ content: 'text' }); // For text search
 PostModel.index({ createdAt: -1 }); // For general date sorting
@@ -29,6 +29,6 @@ PostModel.index({ createdAt: -1 }); // For general date sorting
 
 
 
-const Post = mongoose.model('post', PostModel );//
+const Post = mongoose.model('post', PostModel );
 
 export default Post;

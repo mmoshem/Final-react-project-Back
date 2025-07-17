@@ -8,8 +8,7 @@ const upload = multer({
 
 
 const uploadController = async (req, res) => {
-    try {
-        console.log('Upload request received:'); 
+    try { 
 
         if (!req.file) {
             return res.status(400).json({ message: 'No image provided' });
@@ -26,15 +25,12 @@ const uploadController = async (req, res) => {
                         reject(error);
                     }
                     else{
-                        console.log('Cloudinary success:', result.secure_url);
                         resolve(result);
                     }
                 }
             );
             uploadStream.end(req.file.buffer); 
         });
-
-        console.log('About to send response with URL:', result.secure_url);
 
         return res.status(200).json({
             success: true,

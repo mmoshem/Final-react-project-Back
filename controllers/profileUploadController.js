@@ -1,7 +1,7 @@
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
-import UserInfo from '../models/UserInfo.js'; // ✅ ודאי שזה הנתיב הנכון
-import Group from '../models/Group.js'; // group
+import UserInfo from '../models/UserInfo.js'; 
+import Group from '../models/Group.js'; 
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -11,7 +11,7 @@ const upload = multer({
 const uploadProfilePicture = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const groupId = req.body.groupId; // group
+    const groupId = req.body.groupId; 
 
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image provided' });
@@ -21,16 +21,16 @@ const uploadProfilePicture = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing userId or groupId' });
     }
 
-    const isGroupUpload = !!groupId; // group
-    const uploadTarget = isGroupUpload ? groupId : userId; // group
+    const isGroupUpload = !!groupId; 
+    const uploadTarget = isGroupUpload ? groupId : userId; 
 
     console.log(`Uploading ${isGroupUpload ? 'group' : 'profile'} picture for ${isGroupUpload ? 'group' : 'user'} ${uploadTarget}...`); // group
 
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: isGroupUpload ? 'group_pictures' : 'profile_pictures', // group
-          public_id: isGroupUpload ? `group_${groupId}` : userId, // group
+          folder: isGroupUpload ? 'group_pictures' : 'profile_pictures', 
+          public_id: isGroupUpload ? `group_${groupId}` : userId, 
           overwrite: true,
           resource_type: 'image'
         },
@@ -39,7 +39,6 @@ const uploadProfilePicture = async (req, res) => {
             console.error('Cloudinary error:', error);
             return reject(error);
           }
-          console.log('Upload successful:', result.secure_url);
           resolve(result);
         }
       );
@@ -56,11 +55,10 @@ const uploadProfilePicture = async (req, res) => {
         { new: true }
       );
     } else {
-      // ✅ עדכון כתובת התמונה במסד הנתונים - original profile logic
       await UserInfo.findOneAndUpdate(
         { userId }, // מחפש לפי userId
         { profilePicture: result.secure_url }, // מעדכן כתובת תמונה
-        { new: true } // מחזיר את המסמך המעודכן (לא חובה)
+        { new: true } 
       );
     }
 
@@ -70,7 +68,7 @@ const uploadProfilePicture = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error uploading picture:', error); // group
+    console.error('Error uploading picture:', error); 
     return res.status(500).json({
       success: false,
       message: 'Upload failed'

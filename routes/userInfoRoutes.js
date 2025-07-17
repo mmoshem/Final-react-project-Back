@@ -11,7 +11,6 @@ router.get('/:userId/followers', getFollowers);
 router.get('/:userId/following', getFollowing);
 
 
-//router.post('/api/userinfo/update', updateUserInfo);
 
 export default router;
 

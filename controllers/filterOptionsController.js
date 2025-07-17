@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// נתיב לקובץ JSON שבתיקיית data
+
 const filePath = path.join(__dirname, '../data/filterOptions.json');
 
 // קריאה לקובץ
@@ -32,7 +32,7 @@ export const addFilterValue = async (req, res) => {
     const data = fs.readFileSync(filePath, 'utf-8');
     const filterOptions = JSON.parse(data);
 
-    // ודא שהקטגוריה קיימת
+
     if (!filterOptions[category]) {
       filterOptions[category] = [];
     }

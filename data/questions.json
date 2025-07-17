@@ -23,5 +23,55 @@
     "questionText": "Which method converts a JSON string into a JavaScript object?",
     "options": ["JSON.parse()", "JSON.stringify()", "parseJSON()", "toObject()"],
     "correctAnswerIndex": 0
+  },
+  {
+    "questionText": "What does CSS stand for?",
+    "options": ["Cascading Style Sheets", "Computer Style Syntax", "Colorful Style Settings", "Creative Styling System"],
+    "correctAnswerIndex": 0
+  },
+  {
+    "questionText": "Which symbol is used for comments in JavaScript?",
+    "options": ["<!-- comment -->", "// comment", "# comment", "** comment **"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "Which HTML attribute is used to define inline styles?",
+    "options": ["class", "style", "font", "css"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "In Python, what does the 'len()' function return?",
+    "options": ["The number of words", "The number of characters", "The length of an object", "The memory size"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "questionText": "What is the default port for HTTP?",
+    "options": ["443", "21", "80", "25"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "questionText": "Which of the following is not a programming language?",
+    "options": ["Python", "HTML", "Java", "C++"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "Which operator is used to assign a value to a variable in most programming languages?",
+    "options": ["=", "==", "===", ":="],
+    "correctAnswerIndex": 0
+  },
+  {
+    "questionText": "What does 'DOM' stand for in web development?",
+    "options": ["Data Object Model", "Document Object Model", "Dynamic Object Mapping", "Document Oriented Module"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "questionText": "Which language runs in a web browser?",
+    "options": ["Python", "C++", "JavaScript", "Java"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "questionText": "In Git, what command is used to upload changes to a remote repository?",
+    "options": ["git push", "git pull", "git commit", "git merge"],
+    "correctAnswerIndex": 0
   }
 ]
