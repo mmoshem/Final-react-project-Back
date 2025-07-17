@@ -577,3 +577,40 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
+// Get likers for a post
+export const getPostLikers = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(postId)) return res.status(400).json({ message: 'Invalid postId' });
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    // Defensive: if no likes, return empty array
+    if (!post.likedBy || post.likedBy.length === 0) {
+      return res.json([]);
+    }
+    // Only use valid ObjectIds
+    const likerIds = post.likedBy
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
+    if (likerIds.length === 0) return res.json([]);
+
+    // Aggregation: lookup UserInfo by userId in likedBy array
+    const users = await UserInfo.aggregate([
+      { $match: { userId: { $in: likerIds } } },
+      {
+        $project: {
+          _id: 0, // do not return _id
+          userId: 1,
+          first_name: 1,
+          last_name: 1,
+          profilePicture: 1
+        }
+      }
+    ]);
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch likers' });
+  }
+};
+
