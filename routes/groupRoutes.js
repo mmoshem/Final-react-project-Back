@@ -33,13 +33,11 @@ const router = express.Router();
 
 // Log all requests to this router
 router.use((req, res, next) => {
-    console.log('🔥 GROUP ROUTER REQUEST:', req.method, req.originalUrl);
     next();
 });
 
 // Test route
 router.get('/test', (req, res) => {
-    console.log('🧪 Test route hit!');
     res.json({ message: '✅ Test route working!' });
 });
 
@@ -47,14 +45,11 @@ router.get('/test', (req, res) => {
 router.get('/test-delete/:publicId', async (req, res) => {
     try {
         const publicId = req.params.publicId.replace('--', '/');
-        console.log('🧪 Testing deletion of:', publicId);
         
         const result = await cloudinary.uploader.destroy(publicId);
-        console.log('🧪 Cloudinary result:', result);
         
         res.json({ success: true, result, publicId });
     } catch (error) {
-        console.error('🧪 Cloudinary error:', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -100,8 +95,7 @@ router.post('/:id/cancel-request', cancelJoinRequest);
 router.get('/:id', getGroupById);
 router.put('/:id', updateGroup);
 router.delete('/:id', (req, res, next) => {
-    console.log('🚨 DELETE ROUTE HIT! Params:', req.params);
-    console.log('🚨 Calling deleteGroup function...');
+   
     deleteGroup(req, res, next);
 });
 

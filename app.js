@@ -32,11 +32,9 @@ app.use(bodyParser.json());
 // DB connection
 connectDB();
 
-console.log('🔥 Starting backend server');
 
 // Routes
 app.use('/api/groups', groupRoutes);
-console.log('Group routes mounted at /api/groups');
 // Uncomment other routes as needed:
  app.use(userRoutes);
 // app.use(companyRoutes);
@@ -50,7 +48,6 @@ app.use('/api/quiz', quizRoutes);//
 app.use('/api/messages', messageRoutes); // <<<<<<<<<<< הוספנו את זה
 app.use(commentRoutes);
 
-console.log('All routes mounted successfully');
 
 
 const port = process.env.PORT || 5000;

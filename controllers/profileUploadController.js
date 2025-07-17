@@ -1,6 +1,6 @@
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
-import UserInfo from '../models/UserInfo.js'; // ✅ ודאי שזה הנתיב הנכון
+import UserInfo from '../models/UserInfo.js'; 
 import Group from '../models/Group.js'; // group
 
 const upload = multer({

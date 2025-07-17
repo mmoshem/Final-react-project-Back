@@ -8,27 +8,22 @@ export const getGroupAnalytics = async (req, res) => {
         const { groupId } = req.params;
         const { timeRange = '7' } = req.query;
         
-        console.log(`📊 Analytics requested for group: ${groupId}, timeRange: ${timeRange} days`);
         
         if (!mongoose.Types.ObjectId.isValid(groupId)) {
-            console.log('❌ Invalid group ID format');
             return res.status(400).json({ message: 'Invalid group ID' });
         }
 
         const group = await Group.findById(groupId).populate('creator members');
         if (!group) {
-            console.log('❌ Group not found');
             return res.status(404).json({ message: 'Group not found' });
         }
 
-        console.log(`✅ Group found: ${group.name}`);
 
         // Calculate date range
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - parseInt(timeRange));
 
-        console.log(`📅 Date range: ${startDate} to ${endDate}`);
 
         // 1. Posts Analytics - Using your exact schema
         const posts = await Post.find({
@@ -36,7 +31,6 @@ export const getGroupAnalytics = async (req, res) => {
             createdAt: { $gte: startDate, $lte: endDate }
         }).sort({ createdAt: 1 });
 
-        console.log(`📈 Found ${posts.length} posts in time range`);
 
         // Calculate engagement metrics
         const totalLikes = posts.reduce((sum, post) => sum + (post.likedBy?.length || 0), 0);
@@ -170,16 +164,9 @@ export const getGroupAnalytics = async (req, res) => {
             }
         };
 
-        console.log(`✅ Analytics calculated successfully for group ${group.name}`);
-        console.log(`📊 Returning data:`, {
-            totalPosts: analytics.postsAnalytics.totalPosts,
-            totalLikes: analytics.postsAnalytics.totalLikes,
-            totalMembers: analytics.memberAnalytics.totalMembers
-        });
-        
+       
         res.json(analytics);
     } catch (error) {
-        console.error('❌ Error fetching group analytics:', error);
         res.status(500).json({ message: error.message });
     }
 };

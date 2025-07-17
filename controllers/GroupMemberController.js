@@ -4,9 +4,7 @@ import mongoose from 'mongoose';
 
 // Approve join request
 export const approveJoinRequest = async (req, res) => {
-    console.log("✅ approveJoinRequest HIT");               // <-- Add this
-    console.log("params:", req.params);                     // <-- And this
-    console.log("body:", req.body);    
+
     try {
         const groupId = req.params.id;
         const { userId } = req.body;

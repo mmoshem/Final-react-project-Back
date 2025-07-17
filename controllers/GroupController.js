@@ -1,64 +1,62 @@
 import Group from '../models/Group.js';
 import UserInfo from '../models/UserInfo.js';
-import mongoose from 'mongoose'; // ✅ Added this import
-import cloudinary from '../config/cloudinary.js'; // Add this import for Cloudinary cleanup
+import mongoose from 'mongoose'; //
+import cloudinary from '../config/cloudinary.js'; // 
 import Post from '../models/PostModel.js';
 
-console.log('🚨🚨🚨 GROUP CONTROLLER LOADED WITH DEBUG VERSION! 🚨🚨🚨'); // ADD THIS LINE
-
-
 // GET all groups
-export const getAllGroups = async (req, res) => {
+// אקספורט מאפשר לייצא את הפונקציה שיהיה ניתן להשתמש בה גם בקבצים אחרים כמו בראוטס וכו
+
+export const getAllGroups = async (req, res) => {// פונקציה אסינכרונית שמקבלת את כל הקבוצות בקשה ותשובה
     try {
-        const groups = await Group.find().populate('creator', 'name');
-        res.json(groups);
+        const groups = await Group.find().populate('creator', 'name'); //  מחזיר גם את שם היוצר של הקבוצה 
+        res.json(groups);// להחזיר בפורמט של ג'ייסון 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });//אם לא יכול להביא את הקבוצות
     }
 };
 
 // GET single group by ID
-export const getGroupById = async (req, res) => {
+export const getGroupById = async (req, res) => { //  לקבל קבוצה לפי המזהה יש פה את הבקשה ומה שמחזיר ללקוח 
     try {
-        // ✅ Validate ObjectId BEFORE querying database
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ message: 'Invalid group ID format' });
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {//  ואלידציה שהפורמט של מזהה הקבוצה תקין ולא סתם מחרוזת
+            return res.status(400).json({ message: 'Invalid group ID format' });//  להחזיר בגייסון הערה שאיננו תקין
         }
 
         const group = await Group.findById(req.params.id)
-            .populate('creator', 'name')
-            .populate('members', 'name')
-            .populate('pendingRequests.userId', 'email');
+            .populate('creator', 'name')// משלים את הבאת הדאטה מקולקשן של קבוצות ומחזיר את שמו מקולקשן אחר 
+            .populate('members', 'name')//כנל
+            .populate('pendingRequests.userId', 'email');//כנל
 
-        if (!group) {
-            return res.status(404).json({ message: 'Group not found' });
+        if (!group) { //אם לא מוצא קבוצה 
+            return res.status(404).json({ message: 'Group not found' });// הערה שלא נמצאה הקבוצה 
         }
 
         // Get all userIds from pendingRequests
-        const userIds = group.pendingRequests
-            .map(req => req.userId?._id?.toString() || req.userId?.toString())
-            .filter(Boolean);
+        const userIds = group.pendingRequests//  מערך של בקשות הצטרפות 
+            .map(req => req.userId?._id?.toString() || req.userId?.toString())//  לפעמים המערך כבר מלא מאחר ועשינו פופיוליט ולפעמים לא לכן סטרינג
+            .filter(Boolean);//  מסנן תוצאות ריקות 
 
         // Fetch UserInfo for all userIds
-        const userInfos = await UserInfo.find({ userId: { $in: userIds } });
+        const userInfos = await UserInfo.find({ userId: { $in: userIds } }); // מחפש את המידע לפי המזהה של היוזר בתוך הסוגריים סינטקס של מונגו
 
         // Map userId to UserInfo
-        const userInfoMap = {};
-        userInfos.forEach(info => {
+        const userInfoMap = {};// מכינים מילון שבו המזהה של היוזר הוא המפתח 
+        userInfos.forEach(info => { // לעבור על כל המידע שקיבלנו מהיוזראינפו ולהכניס למילון
             userInfoMap[info.userId.toString()] = info;
         });
 
-        // Build a new array for pendingRequests with UserInfo fields and displayName
-        const enrichedPendingRequests = group.pendingRequests.map(req => {
-            const id = req.userId?._id?.toString() || req.userId?.toString();
-            const info = userInfoMap[id];
-            const firstName = info?.first_name || '';
+        // Build a new array for pendingRequests with UserInfo fields and displayName 
+        const enrichedPendingRequests = group.pendingRequests.map(req => { // מעשירה את המידע שיש על כל יוזר במערך ע"י האובייקט רק
+            const id = req.userId?._id?.toString() || req.userId?.toString();// לקבל את המזהה בין הוא אובייקט או סטרינג
+            const info = userInfoMap[id];// שולפים את מסמך היוזר אינפו לפי המזהה
+            const firstName = info?.first_name || '';// אם קיים שם ניקח אותו, אחרת ריק 
             const lastName = info?.last_name || '';
-            const displayName = (firstName || lastName)
+            const displayName = (firstName || lastName)// אם יש שם משפחה ופרטי נחבר אותם אם לא אז אימייל ואחרת 
                 ? `${firstName} ${lastName}`.trim()
                 : req.userId?.email || 'Unknown User';
             return {
-                ...req.toObject(),
+                ...req.toObject(),// תחזיר את האובייקט
                 userId: {
                     ...(req.userId?.toObject ? req.userId.toObject() : req.userId),
                     first_name: firstName,
@@ -69,10 +67,10 @@ export const getGroupById = async (req, res) => {
             };
         });
 
-        // Send a plain JS object with enriched pendingRequests
+        // חזרה לפרונט!! את כל פרטי הקבוצה 
         res.json({
-            ...group.toObject(),
-            pendingRequests: enrichedPendingRequests
+            ...group.toObject(),// ממירים לאובייקט רגיל כדי שנוכל להעביר לגייסון -לפני חוזר אלינו כאובייקט של מונגו 
+            pendingRequests: enrichedPendingRequests// מחליפים את המערך המקורי בזה שיצרנו
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -80,29 +78,29 @@ export const getGroupById = async (req, res) => {
 };
 
 // POST create new group
-export const createGroup = async (req, res) => {
+export const createGroup = async (req, res) => {  // יצירת קבוצה חדשה
     console.log('POST /api/groups received:', req.body);
 
     try {
-        const { name, description, image, isPrivate, userId } = req.body;
+        const { name, description, image, isPrivate, userId } = req.body; // הכנסה את הפרמטרים לגוף האובייקט 
 
         // Check if group name already exists
-        const existingGroup = await Group.findOne({ name: { $regex: `^${name}$`, $options: 'i' } });
+        const existingGroup = await Group.findOne({ name: { $regex: `^${name}$`, $options: 'i' } });// בדיקה לפי סינטקס של מונגו אם קיים שם קבוצה כזה
         if (existingGroup) {
-            return res.status(400).json({ message: 'A group with this name already exists' });
+            return res.status(400).json({ message: 'A group with this name already exists' }); //להחזיר הודעת שגיאה 
         }
 
-        const newGroup = new Group({
+        const newGroup = new Group({// אחרת יצירת קבוצה חדשה
             name,
             description,
             image,
-            isPrivate: isPrivate || false,
+            isPrivate: isPrivate || false,// שקר זה אומר ציבורי 
             creator: userId || null,
-            members: userId ? [userId] : [],
+            members: userId ? [userId] : [],// מערך של משתתפים או ריק או היוצר עצמו 
             memberCount: userId ? 1 : 0
         });
 
-        await newGroup.save();
+        await newGroup.save();// שמירת הקבוצה
 
         // Add groupId to creator's followingGroups if not already present
         if (userId) {
@@ -130,7 +128,6 @@ export const updateGroup = async (req, res) => {
     try {
         const groupId = req.params.id;
         
-        // ✅ Validate ObjectId BEFORE querying database
         if (!mongoose.Types.ObjectId.isValid(groupId)) {
             return res.status(400).json({ message: 'Invalid group ID format' });
         }
@@ -178,11 +175,9 @@ export const updateGroup = async (req, res) => {
 
 // Replace your deleteGroup function with this debug version temporarily
 export const deleteGroup = async (req, res) => {
-    console.log('🚨🚨🚨 DELETE GROUP FUNCTION ACTUALLY CALLED! 🚨🚨🚨');
-    console.log('🚨🚨🚨 THIS IS THE DEBUG VERSION! 🚨🚨🚨');
+
     try {
         const groupId = req.params.id;
-        console.log('🚨 Group ID received:', groupId);
 
         if (!mongoose.Types.ObjectId.isValid(groupId)) {
             return res.status(400).json({ message: 'Invalid group ID format' });
@@ -278,40 +273,38 @@ export const deleteGroup = async (req, res) => {
 };
 
 // GET groups by creator
-export const getGroupsByCreator = async (req, res) => {
+export const getGroupsByCreator = async (req, res) => {// פונק אסינכרונית שמביאה את הקבוצות לםי יוצר ספציפי
     try {
-        const userId = req.params.userId;
+        const userId = req.params.userId; // קבלת מזהה היוזר שרוצים את כל הקבוצות שלו 
         
-        // ✅ Validate ObjectId BEFORE querying database
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {// וואלידציה שמזהה היוזר הוא לא סתם סטרינג
             return res.status(400).json({ message: 'Invalid user ID format' });
         }
 
-        const groups = await Group.find({ creator: userId })
-            .populate('creator', 'name')
+        const groups = await Group.find({ creator: userId })// מחפש  קבוצות של יוזר זה
+            .populate('creator', 'name')// הבא מקולקשנים אחרים גם שם של היוצר ולא רק מזהה
             .sort({ createdAt: -1 });
 
-        res.json(groups);
+        res.json(groups);// מחזיר קובץ ג'ייסון של הקבוצות
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 // GET groups where user is a member
-export const getGroupsByMember = async (req, res) => {
+export const getGroupsByMember = async (req, res) => { //קבוצות שיוזר זה הוא משתתף בהן אך לא יוצרן 
     try {
         const userId = req.params.userId;
         
-        // ✅ Validate ObjectId BEFORE querying database
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {// וואלידציה שהמזהה תקין
             return res.status(400).json({ message: 'Invalid user ID format' });
         }
 
-        const groups = await Group.find({ members: userId })
-            .populate('creator', 'name')
+        const groups = await Group.find({ members: userId })//מוצא את כל הקבוצות 
+            .populate('creator', 'name')// מביא מקולקשנים אחרים את השם של המשתף
             .sort({ createdAt: -1 });
 
-        res.json(groups);
+        res.json(groups);// מחזיר לפרונט קובץ ג'ייסון 
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
