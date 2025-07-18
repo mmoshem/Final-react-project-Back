@@ -39,16 +39,6 @@ const handleUserCommand = async (req, res) => {
           user: newUser,
         });
 
-      case "login":
-        const user = await User.findOne({
-          email: data.email,
-          password: data.password,
-        });
-        if (!user) {
-          return res.status(401).json({ message: "Invalid email or password" });
-        }
-        return res.json({ message: "Login successful", type:"user" ,user, answer: true });
-
       default:
         return res.status(400).json({ message: "Invalid command" });
     }
