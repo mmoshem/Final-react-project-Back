@@ -1,4 +1,4 @@
-// controllers/CreatePost.js
+
 import Post from "../models/PostModel.js";
 import UserInfo from "../models/UserInfo.js";
 import cloudinary from '../config/cloudinary.js';
@@ -460,122 +460,8 @@ export const likeDislike = async (req, res) => {
   }
 };
 
-export const getFilteredPosts = async (req, res) => {
-  try {
-    const { userId, startDate, endDate, contentFilter, includeFriends } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    
-    let query = {};
-    
-    // User filter - include friends if requested
-    if (includeFriends === 'true') {
-      // Get user's friends list
-      const userInfo = await UserInfo.findOne({ userId: userId });
-      const friendsIds = userInfo ? userInfo.followingUsers : [];
-      
-      // Include user's own posts and friends' posts
-      query.userId = { $in: [userId, ...friendsIds] };
-    } else {
-      query.userId = userId;
-    }
-    
-    // Custom date range filtering
-    if (startDate || endDate) {
-      query.createdAt = {};
-      
-      if (startDate) {
-        const startDateObj = new Date(startDate);
-        if (isNaN(startDateObj.getTime())) {
-          return res.status(400).json({ message: "Invalid startDate format. Use YYYY-MM-DD" });
-        }
-        query.createdAt.$gte = startDateObj;
-      }
-      
-      if (endDate) {
-        const endDateObj = new Date(endDate);
-        if (isNaN(endDateObj.getTime())) {
-          return res.status(400).json({ message: "Invalid endDate format. Use YYYY-MM-DD" });
-        }
-        query.createdAt.$lte = endDateObj;
-      }
-      
-      // Validate that startDate is before endDate
-      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-        return res.status(400).json({ message: "startDate must be before endDate" });
-      }
-    }
-    
-    // Content-based filtering
-    if (contentFilter === 'media') {
-      query.mediaUrls = { $exists: true, $ne: [] };
-    } else if (contentFilter === 'text') {
-      query.$or = [
-        { mediaUrls: { $exists: false } },
-        { mediaUrls: [] }
-      ];
-    }
-    
-    // Aggregate posts with user info (same as getAllPosts)
-    const posts = await Post.aggregate([
-      { $match: query },
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: 'userinfos',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'userInfo',
-        },
-      },
-      { $unwind: '$userInfo' },
-      {
-        $project: {
-          _id: 1,
-          content: 1,
-          createdAt: 1,
-          userId: 1,
-          mediaUrls: 1,
-          likedBy: 1,
-          comments: 1,
-          profilePicture: '$userInfo.profilePicture',
-          first_name: '$userInfo.first_name',
-          last_name: '$userInfo.last_name',
-          editedAt: 1, 
-        },
-      },
-    ]);
-    
-    res.json(posts);
-    
-  } catch (error) {
-    console.error("Error fetching filtered posts:", error);
-    res.status(500).json({ message: "Failed to fetch filtered posts" });
-  }
-};
 
-export const getUserPosts = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-    
-    // Simple direct query to get user's posts
-    const posts = await Post.find({ userId: userId })
-      .sort({ createdAt: -1 })
-      .populate('userId', 'first_name last_name profilePicture');
-    
-    res.json(posts);
-    
-  } catch (error) {
-    console.error("Error fetching user posts:", error);
-    res.status(500).json({ message: "Failed to fetch user posts" });
-  }
-};
+
 
 // Get likers for a post
 export const getPostLikers = async (req, res) => {
